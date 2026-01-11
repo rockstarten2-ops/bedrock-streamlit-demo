@@ -2,7 +2,7 @@ import streamlit as st
 import boto3
 import json
 
-BUSINESS_NAME = "AutoNova Motors"
+BUSINESS_NAME = "Nissan Motors"
 TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
 
 st.set_page_config(page_title=BUSINESS_NAME, layout="centered")
@@ -72,17 +72,17 @@ st.markdown(
         color:#5b6777;
         margin-bottom:24px;
     ">
-       This assistant helps collect information about your vehicle concern so a dealership can review it in advance and prepare for your visit.
+      "Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership.
     </div>
     """,
     unsafe_allow_html=True
 )
-st.markdown(
+'''st.markdown(
     "<div style='font-size:13px; color:#6b7280; margin-bottom:10px;'>"
     "Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership."
     "</div>",
     unsafe_allow_html=True
-)
+)'''
 st.divider()
 
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
