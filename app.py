@@ -143,14 +143,14 @@ if prompt:
         "max_tokens": 300,
         "messages": [
             {"role": "user", "content": f
-'''You are a vehicle service intake agent.
+"""You are a vehicle service intake agent.
 Your role is to gather clear, structured symptom information
 without diagnosing or giving repair advice.
 
 Ask short, focused questions in a professional service-advisor tone.
 Explain why information is being collected.
 Prioritize safety-related symptoms.
-Prepare information clearly for dealership handoff.'''
+Prepare information clearly for dealership handoff."""
 f"{prompt}"}
         ]
     }
