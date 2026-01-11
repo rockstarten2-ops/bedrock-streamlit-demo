@@ -125,21 +125,7 @@ bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
 MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
 
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {
-            "role": "assistant",
-            "content": (
-                "You are a vehicle service intake assistant for a Nissan/Infiniti dealership. "
-                "Your purpose is to gather information before a service visit. "
-                "Be empathetic and human. "
-                "Ask only ONE short question at a time. "
-                "Never repeat introductions. "
-                "Never ask multi-part or long questions. "
-                "Do not diagnose, estimate costs, or suggest repairs. "
-                "Acknowledge what the customer said before asking the next question."
-            )
-        }
-    ]
+    st.session_state.messages = []
 
 if "stage" not in st.session_state:
     st.session_state.stage = "issue"
