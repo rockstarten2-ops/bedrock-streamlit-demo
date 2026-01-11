@@ -144,6 +144,22 @@ prompt = st.chat_input("""Start by telling us what you’re experiencing:
 - 🛠️ Something feels off, but I’m not sure how to describe it
 """)
 
+def format_messages_for_claude(messages):
+    formatted = []
+    for msg in messages:
+        formatted.append({
+            "role": msg["role"],
+            "content": [
+                {
+                    "type": "text",
+                    "text": msg["content"]
+                }
+            ]
+        })
+    return formatted
+
+
+
 if prompt:
     # Add user message ONCE
     st.session_state.messages.append({
@@ -156,14 +172,18 @@ if prompt:
         st.write(prompt)
 
     # Call Bedrock with full conversation
-    response = bedrock.invoke_model(
-        modelId=MODEL_ID,
-        body=json.dumps({
-            "messages": st.session_state.messages
-        }),
-        accept="application/json",
-        contentType="application/json"
-    )
+   claude_messages = format_messages_for_claude(st.session_state.messages)
+
+response = bedrock.invoke_model(
+    modelId=MODEL_ID,
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": claude_messages,
+        "max_tokens": 500
+    }),
+    accept="application/json",
+    contentType="application/json"
+)
 
     result = json.loads(response["body"].read())
     assistant_reply = result["content"][0]["text"]
