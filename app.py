@@ -90,7 +90,8 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-prompt = st.chat_input("""
+prompt = st.chat_input("""  "*You can ask things like:*"
+
 - 🚨 *A warning light just came on — what could it mean?*  
 - 🔊 *I hear a noise when braking — is it serious?*  
 - 🔋 *My battery drains quickly — should I visit a service center?*  
