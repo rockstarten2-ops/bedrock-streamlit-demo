@@ -128,7 +128,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": ("You are a vehicle service intake assistant for a Nissan/Infiniti dealership. "
+            "content": (
+                "You are a vehicle service intake assistant for a Nissan/Infiniti dealership. "
                 "Your purpose is to gather information before a service visit. "
                 "Be empathetic and human. "
                 "Ask only ONE short question at a time. "
@@ -136,7 +137,6 @@ if "messages" not in st.session_state:
                 "Never ask multi-part or long questions. "
                 "Do not diagnose, estimate costs, or suggest repairs. "
                 "Acknowledge what the customer said before asking the next question."
-                
             )
         }
     ]
@@ -186,21 +186,18 @@ if prompt:
         st.write(prompt)
 
     # Format messages for Claude
-    claude_messages = format_messages_for_claude(
-        st.session_state.messages
-    )
+   claude_messages = format_messages_for_claude(st.session_state.messages)
 
-    # Call Bedrock
-    response = bedrock.invoke_model(
-        modelId=MODEL_ID,
-        body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": claude_messages,
-            "max_tokens": 500
-        }),
-        accept="application/json",
-        contentType="application/json"
-    )
+response = bedrock.invoke_model(
+    modelId=MODEL_ID,
+    body=json.dumps({
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": claude_messages,
+        "max_tokens": 500
+    }),
+    accept="application/json",
+    contentType="application/json"
+)
   
 
     result = json.loads(response["body"].read())
