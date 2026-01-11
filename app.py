@@ -2,7 +2,7 @@ import streamlit as st
 import boto3
 import json
 
-BUSINESS_NAME = "Nissan Motors"
+BUSINESS_NAME = "Tell Me More"
 TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
 
 st.set_page_config(page_title=BUSINESS_NAME, layout="centered")
@@ -57,6 +57,7 @@ textarea {
 </style>
 """, unsafe_allow_html=True)
 
+st.image("nissaninfinitilogo.png", width=120)
 st.markdown(
     f"""
     <div style="
@@ -72,34 +73,9 @@ st.markdown(
         color:#5b6777;
         margin-bottom:24px;
     ">
-      Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership.
+      We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
     </div>
     """,
-    unsafe_allow_html=True
-)
-
-st.image("nissaninfinitilogo.png", width=120)
-st.markdown(
-    """
-    <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;">
-        <img src="nissaninfinitilogo.png" style="height:56px;" />
-        <div>
-            <div style="font-size:32px; font-weight:800;">
-                Nissan Tell Me More
-            </div>
-            <div style="font-size:14px; color:#6b7280;">
-                Vehicle issue intake before your dealership visit
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    "<div style='font-size:15px; color:#4b5563; margin-bottom:18px;'>"
-    "We’ll ask a few questions to understand what’s going on, so your dealership can prepare before contacting you."
-    "</div>",
     unsafe_allow_html=True
 )
 
