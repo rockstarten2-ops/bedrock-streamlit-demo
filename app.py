@@ -13,7 +13,7 @@ st.set_page_config(page_title="Tell Me More", page_icon="🚗", layout="centered
 col1, col2 = st.columns([1, 5])
 with col1:
     st.image(
-        "https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_logo.png",
+        "nissaninfinitilogo.png",
         width=80,
     )
 with col2:
