@@ -1,26 +1,39 @@
 import streamlit as st
 import boto3
 import json
+import base64
 
-# -----------------------------
-# Page config
-# -----------------------------
-st.set_page_config(page_title="Tell Me More", page_icon="🚗", layout="centered")
+# ==============================
+# Page Config
+# ==============================
+st.set_page_config(page_title="Tell Me More", layout="centered")
 
-# -----------------------------
-# Header (KEEP AS IS VISUALLY)
-# -----------------------------
-col1, col2 = st.columns([1, 5])
-with col1:
-    st.image(
-        "nissaninfinitilogo.png",
-        width=80,
-    )
-with col2:
-    st.markdown("## Tell Me More")
-    st.markdown(
-        "We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit."
-    )
+# ==============================
+# Helper: Load image
+# ==============================
+def image_to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+logo_base64 = image_to_base64("nissaninfinitilogo.png")
+
+# ==============================
+# Header UI (UNCHANGED STYLE)
+# ==============================
+st.markdown(
+    f"""
+    <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
+        <img src="data:image/png;base64,{logo_base64}" style="height:55px;" />
+        <div>
+            <div style="font-size:32px; font-weight:800;">Tell Me More</div>
+            <div style="color:#6b7280;">
+                We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
+            </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.divider()
 
