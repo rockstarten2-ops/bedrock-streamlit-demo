@@ -81,7 +81,7 @@ st.markdown(
 st.markdown(
     """
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;">
-        <img src="nissan-logo.png" style="height:56px;" />
+        <img src="nissaninfinitilogo.png" style="height:56px;" />
         <div>
             <div style="font-size:32px; font-weight:800;">
                 Nissan Tell Me More
