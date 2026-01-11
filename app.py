@@ -90,14 +90,13 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-prompt = st.chat_input(st.markdown("**You can ask things like:**")
-st.markdown("""
+prompt = st.chat_input("""
 - 🚨 *A warning light just came on — what could it mean?*  
 - 🔊 *I hear a noise when braking — is it serious?*  
 - 🔋 *My battery drains quickly — should I visit a service center?*  
 - 🌡️ *The engine temperature feels high — is it safe to drive?*  
 - 🛠️ *What should I explain to the dealer when I go in?*
-"""))
+""")
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
