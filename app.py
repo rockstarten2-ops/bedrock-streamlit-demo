@@ -72,9 +72,15 @@ st.markdown(
         color:#5b6777;
         margin-bottom:24px;
     ">
-       Helping you understand vehicle issues before visiting a dealership
+       This assistant helps collect information about your vehicle concern so a dealership can review it in advance and prepare for your visit.
     </div>
     """,
+    unsafe_allow_html=True
+)
+st.markdown(
+    "<div style='font-size:13px; color:#6b7280; margin-bottom:10px;'>"
+    "Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership."
+    "</div>",
     unsafe_allow_html=True
 )
 st.divider()
@@ -90,13 +96,13 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-prompt = st.chat_input("""  You can ask things like:
+prompt = st.chat_input("""Start by telling us what you’re experiencing:
 
-- 🚨 *A warning light just came on — what could it mean?*  
-- 🔊 *I hear a noise when braking — is it serious?*  
-- 🔋 *My battery drains quickly — should I visit a service center?*  
-- 🌡️ *The engine temperature feels high — is it safe to drive?*  
-- 🛠️ *What should I explain to the dealer when I go in?*
+- 🚨 A warning light came on — tell me which one and when it started  
+- 🔊 There’s a noise while driving or braking  
+- 🔋 The vehicle struggles to start or loses charge  
+- 🌡️ The engine feels hotter than usual  
+- 🛠️ Something feels off, but I’m not sure how to describe it
 """)
 
 if prompt:
@@ -108,9 +114,10 @@ if prompt:
         "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": 300,
         "messages": [
-            {"role": "user", "content": f"You are a knowledgeable and neutral vehicle support assistant helping car owners understand potential issues, warning signs, and next steps before visiting a dealership. "
-"You explain things clearly in simple language, avoid sales language, and help users decide whether an issue is urgent or can wait. "
-"You do not provide repair instructions, pricing guarantees, or safety-critical advice, and you recommend visiting an authorized service center when appropriate.\n\n"
+            {"role": "user", "content": f"You are a vehicle service intake agent. Your role is to help a car owner clearly describe an issue with their vehicle before visiting a dealership. "
+"You ask focused, one-at-a-time follow-up questions to understand symptoms, timing, frequency, severity, and any warning indicators. "
+"You do not diagnose, do not suggest repairs, and do not speculate on costs. "
+"Your goal is to collect clear, structured information that can be shared with a dealership service advisor so they can prepare in advance.\n\n"
 f"{prompt}"}
         ]
     }
