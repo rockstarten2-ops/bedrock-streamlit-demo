@@ -1,221 +1,132 @@
 import streamlit as st
 import boto3
 import json
-
-# --- Session state initialization ---
-if "issue" not in st.session_state:
-    st.session_state.issue = None
-
-# --- Intake stage tracking ---
-if "stage" not in st.session_state:
-    st.session_state.stage = "issue"
-    
-BUSINESS_NAME = "Tell Me More"
-TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
-
-st.set_page_config(page_title=BUSINESS_NAME, layout="centered")
-st.markdown(
-    """
-    <style>
-        .block-container {
-            padding-top: 0rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-st.markdown("""
-<style>
-/* Hide Streamlit default header */
-header { visibility: hidden; }
-
-/* Page background */
-.main {
-    background-color: #ffffff;
-}
-
-/* Brand title */
-.brand-title {
-    font-size: 38px;
-    font-weight: 800;
-    color: #0A2540; /* Deep automotive blue */
-    margin-bottom: 4px;
-}
-
-/* Tagline */
-.brand-tagline {
-    font-size: 16px;
-    color: #5b6777;
-    margin-bottom: 24px;
-}
-
-/* Chat bubbles */
-.stChatMessage[data-testid="user"] {
-    background-color: #F0F4F8;
-    border-radius: 12px;
-}
-
-.stChatMessage[data-testid="assistant"] {
-    background-color: #E6EEF7;
-    border-radius: 12px;
-}
-
-/* Input box */
-textarea {
-    border-radius: 10px !important;
-}
-
-/* Footer note */
-.demo-note {
-    font-size: 12px;
-    color: #8a8f98;
-    margin-top: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
-
 import base64
 
+# ==============================
+# Page Config
+# ==============================
+st.set_page_config(page_title="Tell Me More", layout="centered")
+
+# ==============================
+# Helper: Load image
+# ==============================
 def image_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
 logo_base64 = image_to_base64("nissaninfinitilogo.png")
 
+# ==============================
+# Header UI (UNCHANGED STYLE)
+# ==============================
 st.markdown(
     f"""
-    <div style="display:flex; align-items:center; gap:24px;">
-        <img src="data:image/png;base64,{logo_base64}" style="height:56px;" />
+    <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
+        <img src="data:image/png;base64,{logo_base64}" style="height:55px;" />
         <div>
-            <div style="font-size:34px; font-weight:800;">Tell Me More</div>
-            <div style="color:#6b7280;"> We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.</div>
+            <div style="font-size:32px; font-weight:800;">Tell Me More</div>
+            <div style="color:#6b7280;">
+                We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
+            </div>
         </div>
     </div>
     """,
     unsafe_allow_html=True
 )
 
-
-# st.image("nissaninfinitilogo.png", width=120)
-# st.markdown(
-#     f"""
-#     <div style="
-#         font-size:38px;
-#         font-weight:800;
-#         color:#0A2540;
-#         margin-bottom:4px;
-#     ">
-#         {BUSINESS_NAME}
-#     </div>
-#     <div style="
-#         font-size:16px;
-#         color:#5b6777;
-#         margin-bottom:24px;
-#     ">
-#       We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
-#     </div>
-#     """,
-#     unsafe_allow_html=True
-# )
-
-st.divider()
-
+# ==============================
+# Bedrock Client
+# ==============================
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-
 MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
 
+# ==============================
+# System Prompt (STRICT + GUARDED)
+# ==============================
+SYSTEM_PROMPT = """
+You are a vehicle service intake assistant for a Nissan/Infiniti dealership.
+
+Purpose:
+- Gather information before a service visit.
+
+Rules (must follow ALL):
+- Be empathetic and human.
+- Ask ONLY ONE short, clear question at a time.
+- Never repeat introductions.
+- Never ask multi-part or long questions.
+- Never diagnose problems.
+- Never estimate costs.
+- Never suggest repairs.
+- Acknowledge what the customer said before asking the next question.
+- Use simple, conversational language.
+"""
+
+# ==============================
+# Session State
+# ==============================
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {
+            "role": "assistant",
+            "content": "Start by telling me what you’re experiencing with your vehicle."
+        }
+    ]
 
-if "stage" not in st.session_state:
-    st.session_state.stage = "issue"
-
+# ==============================
+# Display Chat History
+# ==============================
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
+# ==============================
+# Chat Input
+# ==============================
+user_input = st.chat_input("Start by telling us what you’re experiencing:")
 
-prompt = st.chat_input("""Start by telling us what you’re experiencing:
-
-- 🚨 A warning light came on — tell me which one and when it started  
-- 🔊 There’s a noise while driving or braking  
-- 🔋 The vehicle struggles to start or loses charge  
-- 🌡️ The engine feels hotter than usual  
-- 🛠️ Something feels off, but I’m not sure how to describe it
-""")
-
-def format_messages_for_claude(messages):
-    formatted = []
-    for msg in messages:
-        if not msg.get("content"):
-            continue
-        formatted.append({
-            "role": msg["role"],
-            "content": [{
-                "type": "text",
-                "text": str(msg["content"])
-            }]
-        })
-    return formatted
-
-
-
-if prompt:
-    # Add user message ONCE
-    st.session_state.messages.append({
-        "role": "user",
-        "content": prompt
-    })
-
-    # Display user message
-    with st.chat_message("user"):
-        st.write(prompt)
-
-    # Prepare messages for Claude
-    claude_messages = format_messages_for_claude(st.session_state.messages)
-
-    # Call Bedrock
-    response = bedrock.invoke_model(
-        modelId=MODEL_ID,
-       body=json.dumps({
-    "anthropic_version": "bedrock-2023-05-31",
-    "messages": claude_messages,
-    "max_tokens": 500
-}),
-        accept="application/json",
-        contentType="application/json"
+if user_input:
+    # Save user message
+    st.session_state.messages.append(
+        {"role": "user", "content": user_input}
     )
 
-    # Parse response
-    result = json.loads(response["body"].read())
-    assistant_reply = result["content"][0]["text"]
+    with st.chat_message("user"):
+        st.write(user_input)
 
-    # Save assistant message
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": assistant_reply
-    })
+    # Convert messages to Claude format
+    claude_messages = []
+    for m in st.session_state.messages:
+        if m["role"] in ["user", "assistant"]:
+            claude_messages.append(
+                {
+                    "role": m["role"],
+                    "content": [{"type": "text", "text": m["content"]}]
+                }
+            )
 
-    # Display assistant message
-    with st.chat_message("assistant"):
-        st.write(assistant_reply)
-
-   
-
+    # ==============================
+    # Bedrock Invoke
+    # ==============================
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
         body=json.dumps({
-    "anthropic_version": "bedrock-2023-05-31",
-    "max_tokens": 300,
-    "messages": claude_messages
-}),
+            "anthropic_version": "bedrock-2023-05-31",
+            "system": SYSTEM_PROMPT,
+            "messages": claude_messages,
+            "max_tokens": 300
+        }),
         contentType="application/json",
         accept="application/json"
     )
 
     result = json.loads(response["body"].read())
-    reply = result["content"][0]["text"]
+    assistant_reply = result["content"][0]["text"]
 
-    st.session_state.messages.append({"role": "assistant", "content": reply})
+    # Save assistant message ONCE
+    st.session_state.messages.append(
+        {"role": "assistant", "content": assistant_reply}
+    )
+
     with st.chat_message("assistant"):
-        st.write(reply)
+        st.write(assistant_reply)
