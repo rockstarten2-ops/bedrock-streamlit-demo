@@ -5,6 +5,10 @@ import json
 # --- Session state initialization ---
 if "issue" not in st.session_state:
     st.session_state.issue = None
+
+# --- Intake stage tracking ---
+if "stage" not in st.session_state:
+    st.session_state.stage = "issue"
     
 BUSINESS_NAME = "Tell Me More"
 TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
@@ -122,6 +126,9 @@ MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+if "stage" not in st.session_state:
+    st.session_state.stage = "issue"
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
