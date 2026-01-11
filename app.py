@@ -72,17 +72,12 @@ st.markdown(
         color:#5b6777;
         margin-bottom:24px;
     ">
-      "Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership.
+      Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership.
     </div>
     """,
     unsafe_allow_html=True
 )
-'''st.markdown(
-    "<div style='font-size:13px; color:#6b7280; margin-bottom:10px;'>"
-    "Tell Me More mode: we’ll ask a few questions to understand your issue before sharing it with a dealership."
-    "</div>",
-    unsafe_allow_html=True
-)'''
+
 st.divider()
 
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
