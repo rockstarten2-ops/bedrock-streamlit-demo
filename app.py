@@ -147,14 +147,14 @@ prompt = st.chat_input("""Start by telling us what you’re experiencing:
 def format_messages_for_claude(messages):
     formatted = []
     for msg in messages:
+        if not msg.get("content"):
+            continue
         formatted.append({
             "role": msg["role"],
-            "content": [
-                {
-                    "type": "text",
-                    "text": msg["content"]
-                }
-            ]
+            "content": [{
+                "type": "text",
+                "text": str(msg["content"])
+            }]
         })
     return formatted
 
