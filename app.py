@@ -72,7 +72,7 @@ st.markdown(
         color:#5b6777;
         margin-bottom:24px;
     ">
-        AI Assistant for Vehicle Sales, Ownership & Service Experience
+       Helping you understand vehicle issues before visiting a dealership
     </div>
     """,
     unsafe_allow_html=True
@@ -101,7 +101,10 @@ if prompt:
         "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": 300,
         "messages": [
-            {"role": "user", "content": f"You are an AI assistant for a premium car manufacturer.\n\n{prompt}"}
+            {"role": "user", "content": f"You are a knowledgeable and neutral vehicle support assistant helping car owners understand potential issues, warning signs, and next steps before visiting a dealership. "
+"You explain things clearly in simple language, avoid sales language, and help users decide whether an issue is urgent or can wait. "
+"You do not provide repair instructions, pricing guarantees, or safety-critical advice, and you recommend visiting an authorized service center when appropriate.\n\n"
+f"{prompt}"}
         ]
     }
 
