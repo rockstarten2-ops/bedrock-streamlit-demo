@@ -88,27 +88,27 @@ st.markdown(
 )
 
 
-st.image("nissaninfinitilogo.png", width=120)
-st.markdown(
-    f"""
-    <div style="
-        font-size:38px;
-        font-weight:800;
-        color:#0A2540;
-        margin-bottom:4px;
-    ">
-        {BUSINESS_NAME}
-    </div>
-    <div style="
-        font-size:16px;
-        color:#5b6777;
-        margin-bottom:24px;
-    ">
-      We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# st.image("nissaninfinitilogo.png", width=120)
+# st.markdown(
+#     f"""
+#     <div style="
+#         font-size:38px;
+#         font-weight:800;
+#         color:#0A2540;
+#         margin-bottom:4px;
+#     ">
+#         {BUSINESS_NAME}
+#     </div>
+#     <div style="
+#         font-size:16px;
+#         color:#5b6777;
+#         margin-bottom:24px;
+#     ">
+#       We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
+#     </div>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 st.divider()
 
