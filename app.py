@@ -145,9 +145,38 @@ prompt = st.chat_input("""Start by telling us what you’re experiencing:
 """)
 
 if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    # Add user message ONCE
+    st.session_state.messages.append({
+        "role": "user",
+        "content": prompt
+    })
+
+    # Display user message immediately
     with st.chat_message("user"):
         st.write(prompt)
+
+    # Call Bedrock with full conversation
+    response = bedrock.invoke_model(
+        modelId=MODEL_ID,
+        body=json.dumps({
+            "messages": st.session_state.messages
+        }),
+        accept="application/json",
+        contentType="application/json"
+    )
+
+    result = json.loads(response["body"].read())
+    assistant_reply = result["content"][0]["text"]
+
+    # Add assistant message ONCE
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": assistant_reply
+    })
+
+    # Display assistant response
+    with st.chat_message("assistant"):
+        st.write(assistant_reply)
 
     payload = {
         "anthropic_version": "bedrock-2023-05-31",
