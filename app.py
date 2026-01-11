@@ -177,11 +177,21 @@ if prompt:
     # Call Bedrock
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
-        body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": claude_messages,
-            "max_tokens": 500
-        }),
+       body=json.dumps({
+    "anthropic_version": "bedrock-2023-05-31",
+    "system": (
+        "You are a vehicle service intake assistant for a Nissan/Infiniti dealership. "
+        "Your purpose is to gather information before a service visit. "
+        "Be empathetic and human. "
+        "Ask only ONE short question at a time. "
+        "Never repeat introductions. "
+        "Never ask multi-part or long questions. "
+        "Do not diagnose, estimate costs, or suggest repairs. "
+        "Acknowledge what the customer said before asking the next question."
+    ),
+    "messages": claude_messages,
+    "max_tokens": 500
+}),
         accept="application/json",
         contentType="application/json"
     )
