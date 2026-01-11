@@ -1,129 +1,134 @@
 import streamlit as st
 import boto3
 import json
-import base64
 
-# ==============================
-# Page Config
-# ==============================
-st.set_page_config(page_title="Tell Me More", layout="centered")
+# -----------------------------
+# Page config
+# -----------------------------
+st.set_page_config(page_title="Tell Me More", page_icon="🚗", layout="centered")
 
-# ==============================
-# Helper: Load image
-# ==============================
-def image_to_base64(path):
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
+# -----------------------------
+# Header (KEEP AS IS VISUALLY)
+# -----------------------------
+col1, col2 = st.columns([1, 5])
+with col1:
+    st.image(
+        "https://upload.wikimedia.org/wikipedia/commons/2/23/Nissan_logo.png",
+        width=80,
+    )
+with col2:
+    st.markdown("## Tell Me More")
+    st.markdown(
+        "We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit."
+    )
 
-logo_base64 = image_to_base64("nissaninfinitilogo.png")
+st.divider()
 
-# ==============================
-# Header UI (UNCHANGED STYLE)
-# ==============================
-st.markdown(
-    f"""
-    <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
-        <img src="data:image/png;base64,{logo_base64}" style="height:55px;" />
-        <div>
-            <div style="font-size:32px; font-weight:800;">Tell Me More</div>
-            <div style="color:#6b7280;">
-                We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# ==============================
-# Bedrock Client
-# ==============================
+# -----------------------------
+# Bedrock client
+# -----------------------------
 bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+
 MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
 
-# ==============================
-# System Prompt (STRICT + GUARDED)
-# ==============================
+# -----------------------------
+# System prompt (Claude rules)
+# -----------------------------
 SYSTEM_PROMPT = """
 You are a vehicle service intake assistant for a Nissan/Infiniti dealership.
 
-Purpose:
-- Gather information before a service visit.
-
-Rules (must follow ALL):
+Rules you MUST follow:
 - Be empathetic and human.
-- Ask ONLY ONE short, clear question at a time.
+- Ask ONLY ONE short question at a time.
 - Never repeat introductions.
 - Never ask multi-part or long questions.
-- Never diagnose problems.
-- Never estimate costs.
-- Never suggest repairs.
+- Do NOT diagnose problems.
+- Do NOT estimate costs.
+- Do NOT suggest repairs.
 - Acknowledge what the customer said before asking the next question.
 - Use simple, conversational language.
 """
 
-# ==============================
-# Session State
-# ==============================
+# -----------------------------
+# Session state
+# -----------------------------
 if "messages" not in st.session_state:
+    # IMPORTANT:
+    # Assistant greeting is UI-only (NOT sent to Bedrock)
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": "Start by telling me what you’re experiencing with your vehicle."
+            "content": "Start by telling me what you’re experiencing with your vehicle.",
         }
     ]
 
-# ==============================
-# Display Chat History
-# ==============================
+# -----------------------------
+# Render chat history (UI only)
+# -----------------------------
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# ==============================
-# Chat Input
-# ==============================
+# -----------------------------
+# User input
+# -----------------------------
 user_input = st.chat_input("Start by telling us what you’re experiencing:")
 
 if user_input:
-    # Save user message
+    # Show user message immediately
     st.session_state.messages.append(
         {"role": "user", "content": user_input}
     )
-
     with st.chat_message("user"):
         st.write(user_input)
 
-    # Convert messages to Claude format
+    # -----------------------------
+    # Build Claude messages
+    # IMPORTANT RULE:
+    # First message sent to Claude MUST be from user
+    # -----------------------------
     claude_messages = []
-    for m in st.session_state.messages:
-        if m["role"] in ["user", "assistant"]:
+
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
             claude_messages.append(
                 {
-                    "role": m["role"],
-                    "content": [{"type": "text", "text": m["content"]}]
+                    "role": "user",
+                    "content": [{"type": "text", "text": msg["content"]}],
+                }
+            )
+        elif msg["role"] == "assistant" and claude_messages:
+            # Only add assistant messages AFTER at least one user message
+            claude_messages.append(
+                {
+                    "role": "assistant",
+                    "content": [{"type": "text", "text": msg["content"]}],
                 }
             )
 
-    # ==============================
-    # Bedrock Invoke
-    # ==============================
+    # -----------------------------
+    # Call Bedrock
+    # -----------------------------
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
-        body=json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "system": SYSTEM_PROMPT,
-            "messages": claude_messages,
-            "max_tokens": 300
-        }),
+        body=json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "system": SYSTEM_PROMPT,
+                "messages": claude_messages,
+                "max_tokens": 300,
+            }
+        ),
+        accept="application/json",
         contentType="application/json",
-        accept="application/json"
     )
 
     result = json.loads(response["body"].read())
     assistant_reply = result["content"][0]["text"]
 
-    # Save assistant message ONCE
+    # -----------------------------
+    # Save + display assistant reply
+    # -----------------------------
     st.session_state.messages.append(
         {"role": "assistant", "content": assistant_reply}
     )
