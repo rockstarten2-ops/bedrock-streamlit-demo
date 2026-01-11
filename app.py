@@ -123,32 +123,6 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-st.markdown(
-    """
-    <div style="
-        background:#ffffff;
-        border-radius:14px;
-        padding:18px 22px;
-        border:1px solid #e5e7eb;
-        margin-bottom:14px;
-    ">
-        <div style="font-size:15px; font-weight:600; margin-bottom:10px;">
-            Start by telling us what you’re experiencing:
-        </div>
-
-        <ul style="margin-left:16px; color:#374151; font-size:14px; line-height:1.7;">
-            <li>🚨 A warning light came on — which one and when it started</li>
-            <li>🔊 A noise while driving or braking</li>
-            <li>🔋 The vehicle struggles to start or loses charge</li>
-            <li>🌡️ The engine feels hotter than usual</li>
-            <li>🛠️ Something feels off, but it’s hard to describe</li>
-        </ul>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
 
 prompt = st.chat_input("""Start by telling us what you’re experiencing:
 
