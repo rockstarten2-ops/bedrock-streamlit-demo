@@ -181,35 +181,36 @@ if prompt:
         "content": prompt
     })
 
-    # Display user message immediately
+    # Display user message
     with st.chat_message("user"):
         st.write(prompt)
 
-    # Format messages for Claude
-   claude_messages = format_messages_for_claude(st.session_state.messages)
+    # Prepare messages for Claude
+    claude_messages = format_messages_for_claude(st.session_state.messages)
 
-response = bedrock.invoke_model(
-    modelId=MODEL_ID,
-    body=json.dumps({
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": claude_messages,
-        "max_tokens": 500
-    }),
-    accept="application/json",
-    contentType="application/json"
-)
-  
+    # Call Bedrock
+    response = bedrock.invoke_model(
+        modelId=MODEL_ID,
+        body=json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "messages": claude_messages,
+            "max_tokens": 500
+        }),
+        accept="application/json",
+        contentType="application/json"
+    )
 
+    # Parse response
     result = json.loads(response["body"].read())
     assistant_reply = result["content"][0]["text"]
 
-    # Add assistant message ONCE
+    # Save assistant message
     st.session_state.messages.append({
         "role": "assistant",
         "content": assistant_reply
     })
 
-    # Display assistant response
+    # Display assistant message
     with st.chat_message("assistant"):
         st.write(assistant_reply)
 
