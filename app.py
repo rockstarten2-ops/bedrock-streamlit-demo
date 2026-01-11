@@ -66,6 +66,28 @@ textarea {
 </style>
 """, unsafe_allow_html=True)
 
+import base64
+
+def image_to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+logo_base64 = image_to_base64("nissaninfinitilogo.png")
+
+st.markdown(
+    f"""
+    <div style="display:flex; align-items:center; gap:24px;">
+        <img src="data:image/png;base64,{logo_base64}" style="height:56px;" />
+        <div>
+            <div style="font-size:34px; font-weight:800;">Tell Me More</div>
+            <div style="color:#6b7280;">Vehicle issue intake before your dealership visit</div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+
 st.image("nissaninfinitilogo.png", width=120)
 st.markdown(
     f"""
