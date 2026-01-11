@@ -7,18 +7,53 @@ TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
 
 st.set_page_config(page_title=BUSINESS_NAME, layout="centered")
 
-st.markdown(f"""
+st.markdown("""
 <style>
-header {{ visibility: hidden; }}
-.title {{
-    font-size: 36px;
-    font-weight: 700;
-}}
-.tagline {{
+/* Hide Streamlit default header */
+header { visibility: hidden; }
+
+/* Page background */
+.main {
+    background-color: #ffffff;
+}
+
+/* Brand title */
+.brand-title {
+    font-size: 38px;
+    font-weight: 800;
+    color: #0A2540; /* Deep automotive blue */
+    margin-bottom: 4px;
+}
+
+/* Tagline */
+.brand-tagline {
     font-size: 16px;
-    color: #555;
-    margin-bottom: 20px;
-}}
+    color: #5b6777;
+    margin-bottom: 24px;
+}
+
+/* Chat bubbles */
+.stChatMessage[data-testid="user"] {
+    background-color: #F0F4F8;
+    border-radius: 12px;
+}
+
+.stChatMessage[data-testid="assistant"] {
+    background-color: #E6EEF7;
+    border-radius: 12px;
+}
+
+/* Input box */
+textarea {
+    border-radius: 10px !important;
+}
+
+/* Footer note */
+.demo-note {
+    font-size: 12px;
+    color: #8a8f98;
+    margin-top: 10px;
+}
 </style>
 """, unsafe_allow_html=True)
 
