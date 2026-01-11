@@ -214,7 +214,11 @@ if prompt:
 
     response = bedrock.invoke_model(
         modelId=MODEL_ID,
-        body=json.dumps(payload),
+        body=json.dumps({
+    "anthropic_version": "bedrock-2023-05-31",
+    "max_tokens": 300,
+    "messages": claude_messages
+}),
         contentType="application/json",
         accept="application/json"
     )
