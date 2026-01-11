@@ -200,10 +200,8 @@ if prompt:
         }),
         accept="application/json",
         contentType="application/json"
-    ),
-    accept="application/json",
-    contentType="application/json"
-)
+    )
+  
 
     result = json.loads(response["body"].read())
     assistant_reply = result["content"][0]["text"]
