@@ -6,7 +6,16 @@ BUSINESS_NAME = "Tell Me More"
 TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
 
 st.set_page_config(page_title=BUSINESS_NAME, layout="centered")
-
+st.markdown(
+    """
+    <style>
+        .block-container {
+            padding-top: 1rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 st.markdown("""
 <style>
 /* Hide Streamlit default header */
