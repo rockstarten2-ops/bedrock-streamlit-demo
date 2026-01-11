@@ -78,6 +78,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.image("nissaninfinitilogo.png", width=120)
 st.markdown(
     """
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:6px;">
