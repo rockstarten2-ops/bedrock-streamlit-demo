@@ -80,7 +80,7 @@ st.markdown(
         <img src="data:image/png;base64,{logo_base64}" style="height:56px;" />
         <div>
             <div style="font-size:34px; font-weight:800;">Tell Me More</div>
-            <div style="color:#6b7280;">Vehicle issue intake before your dealership visit</div>
+            <div style="color:#6b7280;"> We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.</div>
         </div>
     </div>
     """,
