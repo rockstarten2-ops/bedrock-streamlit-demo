@@ -2,6 +2,10 @@ import streamlit as st
 import boto3
 import json
 
+# --- Session state initialization ---
+if "issue" not in st.session_state:
+    st.session_state.issue = None
+    
 BUSINESS_NAME = "Tell Me More"
 TAGLINE = "AI Assistant for Sales, Service & Product Intelligence"
 
