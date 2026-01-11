@@ -185,16 +185,22 @@ if prompt:
     with st.chat_message("user"):
         st.write(prompt)
 
-    # Call Bedrock with full conversation
-   claude_messages = format_messages_for_claude(st.session_state.messages)
+    # Format messages for Claude
+    claude_messages = format_messages_for_claude(
+        st.session_state.messages
+    )
 
-response = bedrock.invoke_model(
-    modelId=MODEL_ID,
-    body=json.dumps({
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": claude_messages,
-        "max_tokens": 500
-    }),
+    # Call Bedrock
+    response = bedrock.invoke_model(
+        modelId=MODEL_ID,
+        body=json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "messages": claude_messages,
+            "max_tokens": 500
+        }),
+        accept="application/json",
+        contentType="application/json"
+    ),
     accept="application/json",
     contentType="application/json"
 )
