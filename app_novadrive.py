@@ -15,7 +15,7 @@ def image_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-logo_base64 = image_to_base64("Novadrive.jpg")
+logo_base64 = image_to_base64("novadrive_new.png")
 
 # ==============================
 # Header UI (UNCHANGED STYLE)
