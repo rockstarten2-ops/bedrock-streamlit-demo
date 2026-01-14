@@ -22,7 +22,7 @@ logo_base64 = image_to_base64("novadrive_new.png")
 # ==============================
 st.markdown(
     f"""
-    <div style="display:flex; align-items:flex-start; gap:20px; margin-bottom:20px;">
+    <div style="display:flex; align-items:center; gap:20px; margin-bottom:20px;">
         <img src="data:image/png;base64,{logo_base64}" style="height:140px;" />
         <div>
             <div style="font-size:32px; font-weight:800;">Tell Me More</div>
