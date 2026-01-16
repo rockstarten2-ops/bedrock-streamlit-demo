@@ -2,151 +2,127 @@ import streamlit as st
 import boto3
 import json
 
-# =====================================================
+# =========================
 # Page Config
-# =====================================================
+# =========================
 st.set_page_config(
-    page_title="Duggu's Learning Buddy",
-    page_icon="📘",
-    layout="centered"
+    page_title="Hi Duggu! 👋",
+    page_icon="🎒",
+    layout="wide"
 )
 
-# =====================================================
-# Header (UI ONLY)
-# =====================================================
+# =========================
+# Bedrock Client
+# =========================
+bedrock = boto3.client(
+    service_name="bedrock-runtime",
+    region_name="us-east-1"
+)
+
+MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+
+# =========================
+# Session State
+# =========================
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "topic" not in st.session_state:
+    st.session_state.topic = "Maths"
+
+# =========================
+# Sidebar (NO CHAT LOGIC)
+# =========================
+with st.sidebar:
+    st.markdown("## 🎯 Choose a topic")
+    topic = st.radio(
+        "",
+        ["Maths ➕", "Fractions 🍕", "Multiplication ✖️", "Division ➗", "Science 🔬", "Reading 📘", "Fun Quiz 🎉"]
+    )
+    st.session_state.topic = topic.split(" ")[0]
+
+# =========================
+# Header
+# =========================
 st.markdown(
     """
-    <h1>Hi Duggu! 👋</h1>
-    <h3>I'm your learning buddy 🤓</h3>
-    <p>Ask me a question or choose a topic. We'll learn together!</p>
-    <hr>
+    <div style="text-align:center;">
+        <h1>Hi Duggu! 👋</h1>
+        <h3>I’m your learning buddy 🤖</h3>
+        <p>Ask me anything you’re learning in school. We’ll figure it out together!</p>
+        <p><i>Created with love by your dad ❤️</i></p>
+        <hr>
+    </div>
     """,
     unsafe_allow_html=True
 )
 
-# =====================================================
-# Sidebar Topics (UI ONLY)
-# =====================================================
-st.sidebar.header("📚 Choose a topic")
-
-topics = [
-    "Maths ➕",
-    "Fractions 🍕",
-    "Multiplication ✖️",
-    "Division ➗",
-    "Science 🔬",
-    "Reading 📖",
-    "Fun Quiz 🎉"
-]
-
-selected_topic = st.sidebar.radio(
-    "What do you want to learn today?",
-    topics
-)
-
-st.info(
-    f"🎉 Awesome choice, Duggu! Let’s learn **{selected_topic}**. "
-    "Type what you want to start with below 👇"
-)
-
-# =====================================================
-# Session State
-# =====================================================
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "awaiting_response" not in st.session_state:
-    st.session_state.awaiting_response = False
-
-# =====================================================
+# =========================
 # Show Chat History
-# =====================================================
+# =========================
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# =====================================================
+# =========================
 # Chat Input (BOTTOM)
-# =====================================================
+# =========================
 user_input = st.chat_input("Type your question here...")
 
-# =====================================================
-# Handle NEW user input
-# =====================================================
+# =========================
+# Claude Call (STRICTLY SAFE)
+# =========================
 if user_input:
+
+    # 1️⃣ Append USER message FIRST
     st.session_state.messages.append({
         "role": "user",
         "content": user_input
     })
-    st.session_state.awaiting_response = True
 
     with st.chat_message("user"):
         st.markdown(user_input)
 
-# =====================================================
-# 🔐 FINAL SAFETY GATE (CRITICAL)
-# =====================================================
-if (
-    st.session_state.awaiting_response
-    and st.session_state.messages
-    and st.session_state.messages[-1]["role"] == "user"
-):
+    # 2️⃣ Build Claude messages (USER MUST BE LAST)
+    claude_messages = []
+    for msg in st.session_state.messages:
+        if msg["role"] in ["user", "assistant"]:
+            claude_messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
 
-    bedrock = boto3.client(
-        "bedrock-runtime",
-        region_name="us-east-1"
+    system_prompt = (
+        "You are a friendly, patient learning buddy for a Grade 4 student named Duggu. "
+        "Use simple words, emojis, and step-by-step explanations. "
+        f"The current topic is {st.session_state.topic}. "
+        "Encourage Duggu and make learning fun."
     )
 
-    messages = [
-        {
-            "role": m["role"],
-            "content": [{"type": "text", "text": m["content"]}]
-        }
-        for m in st.session_state.messages
-    ]
+    try:
+        response = bedrock.invoke_model(
+            modelId=MODEL_ID,
+            contentType="application/json",
+            accept="application/json",
+            body=json.dumps({
+                "anthropic_version": "bedrock-2023-05-31",
+                "system": system_prompt,
+                "messages": claude_messages,
+                "max_tokens": 500
+            })
+        )
 
-    response = bedrock.invoke_model(
-        modelId="anthropic.claude-3-sonnet-20240229-v1:0",
-        contentType="application/json",
-        accept="application/json",
-        body=json.dumps({
-            "system": (
-                "You are a friendly, patient learning buddy for a Grade 4 student named Duggu. "
-                "Use very simple language. Explain step by step. "
-                "Use examples, emojis, and encouragement. "
-                "Never use advanced terms. Ask small follow-up questions."
-            ),
-            "messages": messages,
-            "max_tokens": 300,
-            "temperature": 0.5
-        })
-    )
+        result = json.loads(response["body"].read())
+        assistant_reply = result["content"][0]["text"]
 
-    result = json.loads(response["body"].read())
-    assistant_reply = result["content"][0]["text"]
+    except Exception as e:
+        assistant_reply = "😕 Oops! Something went wrong. Please try again."
 
-    with st.chat_message("assistant"):
-        st.markdown(assistant_reply)
-
+    # 3️⃣ Append ASSISTANT message AFTER response
     st.session_state.messages.append({
         "role": "assistant",
         "content": assistant_reply
     })
 
-    # 🚨 This line prevents double invoke
-    st.session_state.awaiting_response = False
-
-# =====================================================
-# Footer
-# =====================================================
-st.markdown(
-    """
-    <hr>
-    <center>
-        <p style="color: gray;">
-            🤖 Created with love by your dad ❤️
-        </p>
-    </center>
-    """,
-    unsafe_allow_html=True
-)
+    with st.chat_message("assistant"):
+        st.markdown(assistant_reply)
