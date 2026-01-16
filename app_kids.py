@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # --------------------
-# SESSION STATE INIT
+# SESSION STATE
 # --------------------
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -21,7 +21,7 @@ if "messages" not in st.session_state:
                 "Hi Duggu! 👋🦁\n\n"
                 "I’m Buddy, your learning friend 😊\n\n"
                 "You can talk to me about *anything* — "
-                "school, animals, space, stories, or just what you’re thinking!"
+                "school, animals, space, stories, or just chat!"
             )
         }
     ]
@@ -49,71 +49,61 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # --------------------
-# USER INPUT (ENTER ONLY)
+# INPUT (ENTER ONLY)
 # --------------------
 user_input = st.chat_input("Type here 😊")
 
 if user_input:
-    # Add user message
-    st.session_state.messages.append(
-        {"role": "user", "content": user_input}
-    )
+    # 1️⃣ Store user message
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input
+    })
 
     text = user_input.strip().lower()
 
-    # --------------------
-    # FRIENDLY RESPONSE LOGIC
-    # --------------------
-    acknowledgements = [
-        "That’s interesting, Duggu! 😊",
-        "I like how you’re thinking! 🧠",
-        "That’s a good thought! 😄",
-        "I’m glad you told me that! 🦁"
-    ]
-
+    # 2️⃣ Response logic
     greetings = [
-        "Hi Duggu! 😄 I’m happy you’re here!",
-        "Hello! 🦁 What’s on your mind today?",
-        "Hey there! 😊 Ready to chat?"
+        "Hey Duggu! 😄",
+        "Hello there! 🦁",
+        "Hi! I’m happy you’re here 😊"
     ]
 
-    followups = [
-        "Want to hear something cool?",
-        "Should I tell you a fun fact?",
-        "What made you think about that?",
-        "Do you want to learn something new?"
+    encouragements = [
+        "That’s interesting, Duggu! 😊",
+        "I like how you think! 🧠",
+        "Nice thought! 😄",
+        "I’m glad you shared that 🦁"
     ]
 
     fun_facts = [
         "Did you know? Octopuses have three hearts 🐙",
-        "Fun fact! Mars looks red because of iron dust 🔴",
-        "Cool one! Tigers have striped skin, not just fur 🐯",
-        "Guess what? The Moon has no air 🌙",
-        "Did you know? Akola is famous for cotton production 🌱"
+        "Mars looks red because of iron dust 🔴",
+        "The Moon has no air 🌙",
+        "Tigers have striped skin too 🐯",
+        "Akola is famous for cotton 🌱"
     ]
 
-    # --------------------
-    # RESPONSE DECISION
-    # --------------------
     if text in ["hi", "hello", "hey", "whatsup", "what's up"]:
         reply = random.choice(greetings)
 
-    elif text in ["ok", "okay", "yes", "yeah", "yep", "hmm"]:
-        reply = random.choice(followups)
-
-    elif "?" in text or text.startswith(("what", "why", "how", "when", "where")):
+    elif "?" in text:
         reply = (
-            f"{random.choice(acknowledgements)}\n\n"
-            "Let me explain it in a simple way 😊"
+            f"{random.choice(encouragements)}\n\n"
+            "Let me explain it simply 😊"
         )
 
     else:
         reply = (
-            f"{random.choice(acknowledgements)}\n\n"
+            f"{random.choice(encouragements)}\n\n"
             f"{random.choice(fun_facts)}"
         )
 
-    # Add assistant reply
-    st.session_state.messages.append(
-        {"role": "assistant", "content": reply}
-    )
+    # 3️⃣ Store assistant response
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": reply
+    })
+
+    # 4️⃣ CRITICAL: STOP EXECUTION
+    st.stop()
