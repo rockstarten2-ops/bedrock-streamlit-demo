@@ -1,188 +1,158 @@
 import streamlit as st
-import boto3
-import json
 import random
 
-# ---------------------------
-# PAGE CONFIG
-# ---------------------------
+# ------------------ PAGE SETUP ------------------
 st.set_page_config(
-    page_title="Hi Duggu!",
-    page_icon="🧠",
-    layout="centered"
+    page_title="Duggu's Learning World",
+    page_icon="🎒",
+    layout="wide"
 )
 
-# ---------------------------
-# SESSION STATE
-# ---------------------------
+# ------------------ SESSION STATE ------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "stars" not in st.session_state:
     st.session_state.stars = 0
 
-if "question" not in st.session_state:
-    st.session_state.question = None
+if "current_topic" not in st.session_state:
+    st.session_state.current_topic = None
 
-if "answer" not in st.session_state:
-    st.session_state.answer = None
+if "question_count" not in st.session_state:
+    st.session_state.question_count = 0
 
-if "turns" not in st.session_state:
-    st.session_state.turns = 0
+if "recent_questions" not in st.session_state:
+    st.session_state.recent_questions = set()
 
-# ---------------------------
-# AWS BEDROCK CLIENT
-# ---------------------------
-bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+# ------------------ DATA BANK ------------------
+QUESTIONS = {
+    "Maths": [
+        ("What is 7 + 5?", "12"),
+        ("What is 8 × 3?", "24"),
+        ("What is 15 − 6?", "9"),
+        ("What is half of 20?", "10"),
+    ],
+    "Science": [
+        ("Which planet is called the Red Planet?", "mars"),
+        ("Which animal is known as the King of the Jungle?", "lion"),
+        ("What do plants need to make food?", "sunlight"),
+    ],
+    "Capitals": [
+        ("What is the capital of India?", "delhi"),
+        ("What is the capital of Maharashtra?", "mumbai"),
+        ("Akola is in which Indian state?", "maharashtra"),
+        ("What is the capital of Thailand?", "bangkok"),
+    ],
+    "Games": [
+        ("Spell this backwards: CAT", "tac"),
+        ("Which number comes next: 2, 4, 6, ?", "8"),
+    ],
+    "Stories": [
+        ("Who was Maharana Pratap?", "king"),
+        ("Prithviraj Chauhan was a brave king or a scientist?", "king"),
+    ]
+}
 
-# ---------------------------
-# PHRASES (VARIETY!)
-# ---------------------------
-ENCOURAGEMENTS = [
-    "Awesome thinking, Duggu! 🌟",
-    "You’re doing great, buddy! 💪",
-    "Nice try, Duggu! 😄",
-    "Learning champ! 🏆",
-    "High five, Duggu! ✋"
+PRAISE = [
+    "Awesome work, Duggu! 🌟",
+    "High five! 🙌",
+    "You're learning fast! 🚀",
+    "Great thinking, buddy! 💪",
+    "Nice job! 🎉"
 ]
 
-TRY_AGAIN = [
-    "That’s okay! Want a hint or try something else?",
-    "Good effort! Let’s keep learning together 😊",
-    "No worries at all — learning is about trying!"
+ENCOURAGE = [
+    "Nice try! Want a small hint? 😊",
+    "No worries! Learning takes practice 💙",
+    "Good effort! Let’s keep going 🚴‍♂️"
 ]
 
-CHANGE_TOPIC_PROMPTS = [
-    "Want to switch topics or keep going?",
-    "Should we mix things up now?",
-    "What would you like to try next?"
-]
-
-# ---------------------------
-# QUESTION BANK
-# ---------------------------
-QUESTIONS = [
-    # Maths
-    {"q": "What is 8 + 7?", "a": "15"},
-    {"q": "What is 12 × 2?", "a": "24"},
-
-    # Science
-    {"q": "Which planet is called the Red Planet?", "a": "mars"},
-    {"q": "What gas do plants breathe in?", "a": "carbon dioxide"},
-
-    # Capitals
-    {"q": "What is the capital of India?", "a": "new delhi"},
-    {"q": "Akola is in which Indian state?", "a": "maharashtra"},
-    {"q": "What is the capital of Rajasthan?", "a": "jaipur"},
-    {"q": "What is the capital of Thailand?", "a": "bangkok"},
-
-    # Stories / History
-    {
-        "q": "Who was Prithviraj Chauhan?",
-        "a": "king"
-    },
-
-    # Fun
-    {
-        "q": "Which animal is known as the King of the Jungle?",
-        "a": "lion"
-    }
-]
-
-# ---------------------------
-# FUNCTIONS
-# ---------------------------
-def ask_new_question():
-    q = random.choice(QUESTIONS)
-    st.session_state.question = q["q"]
-    st.session_state.answer = q["a"]
-
-    intro = random.choice(ENCOURAGEMENTS)
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": f"{intro}\n\n{q['q']}"
-    })
-
-def evaluate_answer(user_input):
-    correct = st.session_state.answer.lower() in user_input.lower()
-
-    if correct:
-        st.session_state.stars += 1
-        response = f"🎉 Great job Duggu! You earned ⭐ 1 star!"
-    else:
-        response = random.choice(TRY_AGAIN)
-
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": response
-    })
-
-    st.session_state.turns += 1
-
-    # Occasionally ask to change topic
-    if st.session_state.turns % 3 == 0:
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": random.choice(CHANGE_TOPIC_PROMPTS)
-        })
-    else:
-        ask_new_question()
-
-# ---------------------------
-# SIDEBAR (CLEAN & PREMIUM)
-# ---------------------------
+# ------------------ SIDEBAR ------------------
 with st.sidebar:
-    st.markdown("## 🗺️ Duggu’s Learning World")
-    st.markdown("""
-    🔢 Maths  
-    🔬 Science  
-    🌍 Capitals  
-    🎮 Games  
-    📖 Stories  
-    """)
+    st.markdown("## 🎒 Duggu's Learning World")
+
+    topic = st.radio(
+        "Choose a topic",
+        ["Maths", "Science", "Capitals", "Games", "Stories"],
+        index=0 if st.session_state.current_topic is None else
+        ["Maths", "Science", "Capitals", "Games", "Stories"].index(st.session_state.current_topic)
+    )
+
+    st.session_state.current_topic = topic
 
     st.markdown("---")
-    st.markdown("## ⭐ Stars Earned")
-    st.markdown(f"### {st.session_state.stars} ⭐")
-
-    if st.session_state.stars >= 5:
-        st.success("🏅 Star Learner!")
-    if st.session_state.stars >= 10:
-        st.success("🏆 Super Smart Duggu!")
-
+    st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
     st.markdown("---")
-    st.info("Ask anything — even fun facts about Akola 😄")
+    st.info("💡 Ask anything!\nEven fun facts about Akola 😄")
 
-# ---------------------------
-# HEADER
-# ---------------------------
+# ------------------ HEADER ------------------
 st.markdown("## Hi Duggu! 👋")
-st.markdown("### I’m your learning buddy 😊")
-st.caption("We’ll learn using games, stories, and fun questions!")
+st.markdown("### I’m your learning buddy 🐯 Buddy")
 st.caption("Created with love by your dad ❤️")
 
 st.markdown("---")
 
-# ---------------------------
-# CHAT DISPLAY
-# ---------------------------
+# ------------------ CHAT DISPLAY ------------------
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# ---------------------------
-# USER INPUT
-# ---------------------------
-user_input = st.chat_input("Type your answer here 😊")
+# ------------------ ASK QUESTION ------------------
+def ask_question():
+    topic = st.session_state.current_topic
+    available = [
+        q for q in QUESTIONS[topic]
+        if q[0] not in st.session_state.recent_questions
+    ]
+
+    if not available:
+        st.session_state.recent_questions.clear()
+        available = QUESTIONS[topic]
+
+    question, answer = random.choice(available)
+    st.session_state.recent_questions.add(question)
+
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": f"🐯 **Buddy:** {random.choice(PRAISE)}\n\n{question}"
+    })
+
+    return answer
+
+# ------------------ INITIAL QUESTION ------------------
+if not st.session_state.messages:
+    st.session_state.correct_answer = ask_question()
+
+# ------------------ USER INPUT ------------------
+user_input = st.chat_input("Type your answer 😊")
 
 if user_input:
     st.session_state.messages.append({
         "role": "user",
-        "content": f"Duggu: {user_input}"
+        "content": f"🧒 **Duggu:** {user_input}"
     })
 
-    if st.session_state.question is None:
-        ask_new_question()
+    # CHECK ANSWER
+    if user_input.strip().lower() == st.session_state.correct_answer:
+        st.session_state.stars += 1
+        reply = f"🎉 {random.choice(PRAISE)} You earned ⭐ **1 star**!"
     else:
-        evaluate_answer(user_input)
+        reply = random.choice(ENCOURAGE)
+
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": f"🐯 **Buddy:** {reply}"
+    })
+
+    st.session_state.question_count += 1
+
+    # Ask to mix topics occasionally
+    if st.session_state.question_count % 4 == 0:
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": "🐯 **Buddy:** Want to keep going or try a different topic? 😊"
+        })
+    else:
+        st.session_state.correct_answer = ask_question()
+
+    st.rerun()
