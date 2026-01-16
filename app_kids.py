@@ -25,37 +25,36 @@ if "pending_question" not in st.session_state:
 if "pending_answer" not in st.session_state:
     st.session_state.pending_answer = None
 
+if "last_processed" not in st.session_state:
+    st.session_state.last_processed = ""
+
 # ----------------------------
-# QUESTION BANKS
+# DATA
 # ----------------------------
 QUESTIONS = {
     "maths": [
         ("What is 7 + 5?", "12"),
-        ("What is 9 × 3?", "27"),
-        ("What is 15 − 6?", "9"),
         ("What is 8 + 7?", "15"),
+        ("What is 9 × 3?", "27"),
     ],
     "science": [
         ("Which planet is called the Red Planet?", "mars"),
         ("What gas do plants breathe in?", "carbon dioxide"),
-        ("Which part of the plant makes food?", "leaf"),
     ],
     "capitals": [
         ("What is the capital of India?", "delhi"),
         ("Akola is in which Indian state?", "maharashtra"),
-        ("What is the capital of Maharashtra?", "mumbai"),
     ]
 }
 
 FUN_FACTS = [
-    "Did you know? Lions live in groups called *prides* 🦁",
+    "Lions live in groups called *prides* 🦁",
     "Akola is famous for cotton production 🌱",
     "Mars looks red because of iron dust 🔴",
     "Octopuses have three hearts 🐙",
-    "The Moon has no air 🌕",
 ]
 
-CASUAL_WORDS = ["ok", "okay", "yes", "anything", "hmm", "cool", "hi", "hello"]
+CASUAL = ["hi", "hello", "ok", "okay", "yes", "no", "cool", "anything"]
 
 # ----------------------------
 # SIDEBAR
@@ -65,11 +64,11 @@ with st.sidebar:
     st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
     st.markdown("---")
     st.markdown("💡 **You can say:**")
-    st.markdown("- Maths")
-    st.markdown("- Science")
-    st.markdown("- Capitals")
-    st.markdown("- Surprise / Fun fact")
-    st.markdown("- Or ask *anything!* 😊")
+    st.markdown("- maths")
+    st.markdown("- science")
+    st.markdown("- capitals")
+    st.markdown("- fun fact")
+    st.markdown("- or ask anything 😊")
 
 # ----------------------------
 # HEADER
@@ -97,17 +96,17 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # ----------------------------
-# INPUT
+# INPUT (KEYED + GUARDED)
 # ----------------------------
-user_input = st.chat_input("Type here 😊")
+user_input = st.chat_input("Type here 😊", key="chat_box")
 
 # ----------------------------
-# LOGIC
+# PROCESS INPUT (ONLY ONCE)
 # ----------------------------
-if user_input:
-    user_text = user_input.strip().lower()
+if user_input and user_input != st.session_state.last_processed:
+    st.session_state.last_processed = user_input
+    text = user_input.lower().strip()
 
-    # Add user message
     st.session_state.messages.append({
         "role": "user",
         "content": user_input
@@ -115,55 +114,53 @@ if user_input:
 
     reply = ""
 
-    # ---- ANSWERING A QUESTION ----
+    # ---- Answering Question ----
     if st.session_state.pending_question:
-        if user_text == st.session_state.pending_answer:
+        if text == st.session_state.pending_answer:
             st.session_state.stars += 1
-            reply = f"🎉 Great job, Duggu! You earned ⭐ 1 star!"
+            reply = "🎉 Awesome, Duggu! You earned ⭐ 1 star!"
         else:
-            reply = f"Nice try, Duggu 😊 The correct answer is **{st.session_state.pending_answer.title()}**!"
+            reply = f"Nice try 😊 The correct answer is **{st.session_state.pending_answer.title()}**!"
 
         st.session_state.pending_question = None
         st.session_state.pending_answer = None
 
-    # ---- CASUAL CHAT ----
-    elif user_text in CASUAL_WORDS:
+    # ---- Casual Talk ----
+    elif text in CASUAL:
         reply = random.choice(FUN_FACTS + [
-            "You're doing great, Duggu! 😄",
-            "I love chatting with you 🦁",
+            "I love chatting with you, Duggu! 😄",
+            "You’re doing great, buddy! 🦁",
         ])
 
-    # ---- TOPICS ----
-    elif "math" in user_text:
+    # ---- Topics ----
+    elif "math" in text:
         q, a = random.choice(QUESTIONS["maths"])
-        reply = f"Let’s play with maths, Duggu! 😄\n\n**{q}**"
+        reply = f"Maths time! 😄\n\n**{q}**"
         st.session_state.pending_question = q
         st.session_state.pending_answer = a
 
-    elif "science" in user_text:
+    elif "science" in text:
         q, a = random.choice(QUESTIONS["science"])
-        reply = f"Science time! 🔬\n\n**{q}**"
+        reply = f"Science fun! 🔬\n\n**{q}**"
         st.session_state.pending_question = q
         st.session_state.pending_answer = a
 
-    elif "capital" in user_text:
+    elif "capital" in text:
         q, a = random.choice(QUESTIONS["capitals"])
-        reply = f"Let’s learn capitals 🌍\n\n**{q}**"
+        reply = f"Capital quiz 🌍\n\n**{q}**"
         st.session_state.pending_question = q
         st.session_state.pending_answer = a
 
-    elif "fact" in user_text or "surprise" in user_text:
+    elif "fact" in text or "surprise" in text:
         reply = random.choice(FUN_FACTS)
 
-    # ---- FREE QUESTION MODE ----
+    # ---- Free Chat ----
     else:
         reply = (
             "That’s a great question, Duggu! 😊\n\n"
-            "I can help with school topics or fun facts. "
-            "Try asking about animals, space, maths, or Akola!"
+            "Ask me about animals, space, maths, Akola, or anything fun!"
         )
 
-    # Add buddy reply
     st.session_state.messages.append({
         "role": "assistant",
         "content": reply
