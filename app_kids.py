@@ -151,4 +151,4 @@ if user_input:
         {"role": "assistant", "content": reply}
     )
 
-    st.rerun()
+    st.experimental_rerun()
