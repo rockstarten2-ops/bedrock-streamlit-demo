@@ -150,4 +150,4 @@ with st.sidebar:
     st.markdown("- Maths")
     st.markdown("- Science")
     st.markdown("- Capitals")
-    st.markdown("- Fun facts about Akola")
+    st.markdown("- Fun facts")
