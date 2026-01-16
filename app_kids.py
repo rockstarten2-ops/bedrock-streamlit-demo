@@ -1,152 +1,117 @@
 import streamlit as st
-import boto3
-import json
 import random
 
-# -----------------------------
-# PAGE CONFIG
-# -----------------------------
+# ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="Duggu’s Learning Buddy", layout="centered")
 
-# -----------------------------
-# STYLES (CLEAN & PREMIUM)
-# -----------------------------
-st.markdown("""
-<style>
-.chat { margin-bottom: 12px; font-size: 16px; }
-.user { }
-.bot { }
-</style>
-""", unsafe_allow_html=True)
-
-# -----------------------------
-# SESSION STATE
-# -----------------------------
+# ---------------- SESSION STATE ----------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "stars" not in st.session_state:
     st.session_state.stars = 0
 
-if "question_count" not in st.session_state:
-    st.session_state.question_count = 0
+if "asked_questions" not in st.session_state:
+    st.session_state.asked_questions = set()
 
-if "current_topic" not in st.session_state:
-    st.session_state.current_topic = "Maths"
+if "question_counter" not in st.session_state:
+    st.session_state.question_counter = 0
 
 if "awaiting_answer" not in st.session_state:
     st.session_state.awaiting_answer = False
 
-if "last_correct" not in st.session_state:
-    st.session_state.last_correct = None
+if "current_question" not in st.session_state:
+    st.session_state.current_question = ""
 
-# -----------------------------
-# SIDEBAR (SIMPLE & CLEAN)
-# -----------------------------
+# ---------------- SIDEBAR ----------------
 with st.sidebar:
-    st.markdown("### 🎯 Choose a topic")
-    st.session_state.current_topic = st.radio(
-        "",
-        ["Maths", "Science", "Capitals", "Fun Games", "Stories"]
-    )
+    st.markdown("### 🎯 Topics")
+    st.markdown("• Maths\n• Science\n• Capitals\n• Games\n• Stories")
     st.markdown("---")
     st.markdown(f"### ⭐ Stars Earned: {st.session_state.stars}")
 
-# -----------------------------
-# HEADER
-# -----------------------------
+# ---------------- HEADER ----------------
 st.markdown("""
 <div style="text-align:center;">
 <h1>Hi Duggu! 👋🐯</h1>
 <h3>I’m your learning buddy 😊</h3>
-<p>We’ll learn using games, fun facts, and stories!</p>
+<p>We’ll learn using games, fun facts & stories!</p>
 <p style="color:gray;">Created with love by your dad ❤️</p>
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown("---")
 
-# -----------------------------
-# SHOW CHAT
-# -----------------------------
+# ---------------- QUESTION BANK ----------------
+QUESTION_BANK = [
+    ("What is 8 + 6?", "14"),
+    ("What is 9 × 3?", "27"),
+    ("Which planet is called the Red Planet?", "mars"),
+    ("What is the capital of India?", "delhi"),
+    ("What is the capital of Maharashtra?", "mumbai"),
+    ("What is the capital of Rajasthan?", "jaipur"),
+    ("Duggu, do you know which city is called the Pink City?", "jaipur"),
+    ("Akola is in which Indian state?", "maharashtra"),
+    ("Who was the brave king Prithviraj Chauhan?", "king"),
+    ("Let’s play! Tell me a number between 1 and 10 😊", None),
+]
+
+def get_next_question():
+    remaining = [q for q in QUESTION_BANK if q[0] not in st.session_state.asked_questions]
+    if not remaining:
+        st.session_state.asked_questions.clear()
+        remaining = QUESTION_BANK
+    return random.choice(remaining)
+
+# ---------------- SHOW CHAT ----------------
 for msg in st.session_state.messages:
     if msg["role"] == "user":
-        st.markdown(f"<div class='chat user'>🧒 <b>Duggu:</b> {msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"🧒 **Duggu:** {msg['content']}")
     else:
-        st.markdown(f"<div class='chat bot'>🐯 <b>Buddy:</b> {msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"🐯 **Buddy:** {msg['content']}")
 
-# -----------------------------
-# INPUT
-# -----------------------------
+# ---------------- INPUT ----------------
 user_input = st.chat_input("Type your answer here 😊")
 
-# -----------------------------
-# BEDROCK
-# -----------------------------
-bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
-MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
-
-# -----------------------------
-# QUESTION GENERATOR (CONTROLLED)
-# -----------------------------
-def get_next_question(topic):
-    if topic == "Maths":
-        return random.choice([
-            "What is 7 + 5?",
-            "What is 6 × 4?",
-            "What is 20 ÷ 5?"
-        ])
-    if topic == "Science":
-        return random.choice([
-            "Why do plants need sunlight?",
-            "Which planet is called the Red Planet?",
-            "What do we breathe in to stay alive?"
-        ])
-    if topic == "Capitals":
-        return random.choice([
-            "What is the capital of India?",
-            "What is the capital of Maharashtra?",
-            "What is the capital of Thailand?"
-        ])
-    if topic == "Fun Games":
-        return "Let’s play! Tell me a number between 1 and 10 😊"
-    if topic == "Stories":
-        return "Duggu, do you want to hear a brave story from Rajasthan or a fun fact about Akola?"
-
-# -----------------------------
-# HANDLE INPUT
-# -----------------------------
+# ---------------- LOGIC ----------------
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # Check correctness (simple heuristic)
-    correct_answers = ["12", "24", "4", "delhi", "mumbai", "jaipur", "bangkok", "oxygen", "mars"]
-    is_correct = user_input.lower().strip() in correct_answers
-
+    # Check answer
     if st.session_state.awaiting_answer:
-        if is_correct:
+        correct = st.session_state.current_answer
+        if correct and user_input.lower().strip() == correct:
             st.session_state.stars += 1
-            feedback = "🎉 Great job Duggu! You earned ⭐ 1 star!"
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": "🎉 Great job Duggu! You earned ⭐ 1 star!"
+            })
         else:
-            feedback = "😊 Nice try Duggu! Let’s learn together."
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": "😊 Nice try Duggu! Let’s keep learning together."
+            })
 
-        st.session_state.messages.append({"role": "assistant", "content": feedback})
         st.session_state.awaiting_answer = False
 
-    # Ask next question
-    question = get_next_question(st.session_state.current_topic)
+    # Ask new question
+    q, ans = get_next_question()
+    st.session_state.asked_questions.add(q)
+    st.session_state.current_question = q
+    st.session_state.current_answer = ans
+    st.session_state.awaiting_answer = True
+    st.session_state.question_counter += 1
+
     st.session_state.messages.append({
         "role": "assistant",
-        "content": f"Duggu, here’s a fun one for you 😊\n\n{question}"
+        "content": f"Duggu, here’s a fun one for you 😊\n\n{q}"
     })
-    st.session_state.awaiting_answer = True
-    st.session_state.question_count += 1
 
-    # Ask feedback every 5 questions
-    if st.session_state.question_count % 5 == 0:
+    # Topic switch suggestion
+    if st.session_state.question_counter % 3 == 0:
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "Duggu, are you enjoying this? 👍 Fun / 😐 Okay / 👎 Boring"
+            "content": "Duggu, want to change topic or mix things up? 🎲 Maths, games, capitals, or stories?"
         })
 
     st.rerun()
