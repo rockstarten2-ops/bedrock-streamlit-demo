@@ -1,164 +1,159 @@
 import streamlit as st
 import random
 
-# -----------------------------
+# --------------------------------
 # PAGE CONFIG
-# -----------------------------
+# --------------------------------
 st.set_page_config(
     page_title="Duggu's Learning World",
     page_icon="🦁",
     layout="wide"
 )
 
-# -----------------------------
-# SESSION STATE INIT
-# -----------------------------
+# --------------------------------
+# SESSION STATE
+# --------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "stars" not in st.session_state:
     st.session_state.stars = 0
 
-if "last_question" not in st.session_state:
-    st.session_state.last_question = None
+if "asked_questions" not in st.session_state:
+    st.session_state.asked_questions = set()
 
-# -----------------------------
-# QUESTION BANK (starter only)
-# These are NOT fixed – app can also chat freely
-# -----------------------------
-QUESTION_BANK = {
-    "Maths": [
-        ("What is 7 + 5?", "12"),
-        ("What is 8 + 7?", "15"),
-        ("What is 6 × 4?", "24"),
-    ],
-    "Science": [
-        ("Which planet is called the Red Planet?", "mars"),
-        ("Which animal is known as the King of the Jungle?", "lion"),
-    ],
-    "Capitals": [
-        ("What is the capital of India?", "delhi"),
-        ("Akola is in which Indian state?", "maharashtra"),
-    ],
-    "Stories": [
-        ("Do you want to hear a brave story about Prithviraj Chauhan?", None)
-    ]
-}
+if "greeted" not in st.session_state:
+    st.session_state.greeted = False
 
-# -----------------------------
+# --------------------------------
+# QUESTION BANK (starter pool)
+# --------------------------------
+QUESTIONS = [
+    ("What is 7 + 5?", "12"),
+    ("Which planet is called the Red Planet?", "mars"),
+    ("Which animal is the King of the Jungle?", "lion"),
+    ("What is the capital of India?", "delhi"),
+    ("Akola is in which Indian state?", "maharashtra"),
+]
+
+FUN_FACTS = [
+    "Did you know? Akola is famous for cotton production! 🌱",
+    "Lions live in groups called prides 🦁",
+    "Mars looks red because of iron dust 🔴",
+]
+
+# --------------------------------
 # SIDEBAR
-# -----------------------------
+# --------------------------------
 with st.sidebar:
     st.markdown("## 🦁 Duggu’s Learning World")
     st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
     st.markdown("---")
 
-    st.markdown("### Explore")
     if st.button("➕ Maths"):
-        st.session_state.last_question = ask_topic_question("Maths")
+        ask_random_question()
 
     if st.button("🔬 Science"):
-        st.session_state.last_question = ask_topic_question("Science")
+        ask_random_question()
 
     if st.button("🌍 Capitals"):
-        st.session_state.last_question = ask_topic_question("Capitals")
+        ask_random_question()
 
     if st.button("📖 Stories"):
-        st.session_state.last_question = ask_topic_question("Stories")
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": "🦁 Buddy: Once upon a time, there was a brave king named Prithviraj Chauhan who loved his land and people. Want to hear more? 😊"
+        })
 
     st.markdown("---")
     st.caption("Ask anything — even fun facts about Akola 😊")
 
-# -----------------------------
+# --------------------------------
 # FUNCTIONS
-# -----------------------------
-def ask_topic_question(topic):
-    q, a = random.choice(QUESTION_BANK[topic])
-    st.session_state.messages.append(
-        {"role": "assistant", "content": f"🦁 Buddy: {q}"}
-    )
-    return {"question": q, "answer": a}
+# --------------------------------
+def ask_random_question():
+    available = [q for q in QUESTIONS if q[0] not in st.session_state.asked_questions]
+    if not available:
+        st.session_state.asked_questions.clear()
+        available = QUESTIONS
+
+    q, a = random.choice(available)
+    st.session_state.asked_questions.add(q)
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": f"🦁 Buddy: Alright Duggu! 😊 {q}"
+    })
+    st.session_state.current_answer = a.lower()
 
 
-def handle_free_chat(user_text):
-    greetings = ["hi", "hello", "hey"]
-    if user_text.lower().strip() in greetings:
-        return (
-            "Hi Duggu! 😄 I’m so happy you’re here!\n\n"
-            "You can:\n"
-            "➕ Play with Maths\n"
-            "🔬 Explore Science\n"
-            "🌍 Learn Capitals\n"
-            "📖 Hear fun stories\n\n"
-            "Or just ask me anything!"
-        )
-    return None
-
-
-def check_answer(user_text):
-    q = st.session_state.last_question
-    if not q or not q["answer"]:
+def handle_answer(user_text):
+    if "current_answer" not in st.session_state:
         return False
 
-    if user_text.lower().strip() == q["answer"]:
+    if user_text.lower().strip() == st.session_state.current_answer:
         st.session_state.stars += 1
-        st.session_state.last_question = None
-        st.session_state.messages.append(
-            {
-                "role": "assistant",
-                "content": f"🦁 Buddy: 🎉 Great job Duggu! You earned ⭐ 1 star!"
-            }
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": "🦁 Buddy: 🎉 Awesome Duggu! You got it right! ⭐"
+        })
+    else:
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": "🦁 Buddy: Nice try Duggu! 😊 Learning is about trying!"
+        })
+
+    del st.session_state.current_answer
+    ask_random_question()
+    return True
+
+
+def handle_free_chat(text):
+    text = text.lower().strip()
+
+    if text in ["hi", "hello", "hey"] and not st.session_state.greeted:
+        st.session_state.greeted = True
+        return (
+            "Hi Duggu! 😄 I’m so happy you’re here!\n\n"
+            "Let’s learn with games, stories, and fun questions!\n"
+            "You can also say *surprise* 😉"
         )
-        return True
 
-    return False
+    if text in ["anything", "surprise"]:
+        ask_random_question()
+        return None
 
+    # fallback fun response
+    return random.choice(FUN_FACTS)
 
-# -----------------------------
+# --------------------------------
 # MAIN UI
-# -----------------------------
+# --------------------------------
 st.markdown("## Hi Duggu! 👋")
 st.markdown("### I’m your learning buddy 😊")
-st.caption("We’ll learn with games, stories, and fun questions!")
 st.caption("Created with love by your dad ❤️")
 st.markdown("---")
 
-# -----------------------------
+# --------------------------------
 # CHAT HISTORY
-# -----------------------------
+# --------------------------------
 for msg in st.session_state.messages:
     st.markdown(msg["content"])
 
-# -----------------------------
+# --------------------------------
 # USER INPUT
-# -----------------------------
+# --------------------------------
 user_input = st.chat_input("Type here 😊")
 
 if user_input:
-    # Add user message
-    st.session_state.messages.append(
-        {"role": "user", "content": f"🧒 Duggu: {user_input}"}
-    )
+    st.session_state.messages.append({
+        "role": "user",
+        "content": f"🧒 Duggu: {user_input}"
+    })
 
-    # 1️⃣ Check free chat first (prevents hanging)
-    free_reply = handle_free_chat(user_input)
-    if free_reply:
-        st.session_state.messages.append(
-            {"role": "assistant", "content": f"🦁 Buddy: {free_reply}"}
-        )
-
-    # 2️⃣ Check answer if a question exists
-    elif check_answer(user_input):
-        pass
-
-    # 3️⃣ Otherwise respond naturally
-    else:
-        st.session_state.messages.append(
-            {
+    if not handle_answer(user_input):
+        reply = handle_free_chat(user_input)
+        if reply:
+            st.session_state.messages.append({
                 "role": "assistant",
-                "content": (
-                    "🦁 Buddy: Nice thinking, Duggu! 😊\n\n"
-                    "Want to try a question from Maths, Science, Capitals, or hear a fun story?"
-                )
-            }
-        )
+                "content": f"🦁 Buddy: {reply}"
+            })
