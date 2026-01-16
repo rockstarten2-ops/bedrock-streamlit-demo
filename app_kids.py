@@ -13,7 +13,7 @@ st.set_page_config(
 # ===============================
 # Header UI
 # ===============================
-st.title("Hi Aarav! 👋")
+st.title("Hi Duggu! 👋")
 st.subheader("I’m your learning buddy 🤖")
 st.markdown(
     "Ask me a question or tell me what you're learning in school. "
