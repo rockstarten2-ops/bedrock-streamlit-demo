@@ -20,7 +20,7 @@ if "messages" not in st.session_state:
             "content": (
                 "Hi Duggu! 👋🦁\n\n"
                 "I’m your learning buddy 😊\n\n"
-                "You can ask me about maths, science, capitals, animals, or fun facts!"
+                "You can talk to me about animals, space, maths, capitals, or fun facts!"
             )
         }
     ]
@@ -33,11 +33,13 @@ with st.sidebar:
     st.markdown("⭐ Stars Earned: 0")
     st.markdown("---")
     st.markdown("💡 You can say:")
+    st.markdown("- animals")
+    st.markdown("- space")
     st.markdown("- maths")
     st.markdown("- science")
     st.markdown("- capitals")
     st.markdown("- fun fact")
-    st.markdown("- or ask anything 😊")
+    st.markdown("- or just chat 😊")
 
 # --------------------
 # CHAT DISPLAY
@@ -58,22 +60,49 @@ if user_input:
         {"role": "user", "content": user_input}
     )
 
-    text = user_input.lower()
+    text = user_input.lower().strip()
 
-    if "math" in text:
+    # ---- GREETINGS ----
+    if text in ["hi", "hello", "hey", "whatsup", "what's up", "how r u", "how are you"]:
         reply = random.choice([
-            "Let’s do maths! 😊 What is 5 + 3?",
-            "Maths time! 🧮 What is 10 − 4?",
-            "Try this: What is 6 × 2?"
+            "Hi Duggu! 😄 I’m feeling happy because you’re here!",
+            "Hello! 🦁 Ready to learn something fun today?",
+            "I’m great! 😊 What would you like to talk about?"
         ])
 
+    # ---- ANIMALS ----
+    elif "animal" in text or text == "animals":
+        reply = random.choice([
+            "Lions live in groups called prides 🦁",
+            "Elephants are the largest land animals 🐘",
+            "A group of fish is called a school 🐟"
+        ])
+
+    # ---- SPACE ----
+    elif "space" in text:
+        reply = random.choice([
+            "Mars is called the Red Planet 🔴",
+            "The Sun is a star ☀️",
+            "Astronauts float in space because there is no gravity 🚀"
+        ])
+
+    # ---- MATHS ----
+    elif "math" in text:
+        reply = random.choice([
+            "Let’s try! What is 5 + 4?",
+            "Maths time! 🧮 What is 10 − 3?",
+            "Can you solve this? What is 6 × 2?"
+        ])
+
+    # ---- SCIENCE ----
     elif "science" in text:
         reply = random.choice([
-            "Science is fun! 🔬 Which planet is called the Red Planet?",
-            "What gas do plants breathe in?",
-            "Why do we need the Sun?"
+            "Plants need sunlight and water to grow 🌱",
+            "We breathe oxygen to stay alive 💨",
+            "The Sun gives us heat and light ☀️"
         ])
 
+    # ---- CAPITALS ----
     elif "capital" in text:
         reply = random.choice([
             "What is the capital of India?",
@@ -81,18 +110,19 @@ if user_input:
             "What is the capital of France?"
         ])
 
-    elif "fact" in text or "surprise" in text:
+    # ---- FUN FACT ----
+    elif "fact" in text or "fun" in text or "surprise" in text:
         reply = random.choice([
-            "Lions live in groups called prides 🦁",
             "Octopuses have three hearts 🐙",
-            "Mars looks red because of iron dust 🔴",
-            "Akola is famous for cotton 🌱"
+            "Akola is famous for cotton 🌱",
+            "Butterflies taste with their feet 🦋"
         ])
 
+    # ---- DEFAULT CHAT ----
     else:
         reply = (
             "That’s interesting, Duggu! 😊\n\n"
-            "You can ask me about maths, science, capitals, animals, or fun facts!"
+            "You can ask me about animals, space, maths, capitals, or fun facts!"
         )
 
     st.session_state.messages.append(
