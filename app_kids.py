@@ -137,4 +137,4 @@ if user_input:
             "You can ask me questions, play games, or click a topic!"
         )
 
-    st.experimental_rerun()
+    st.rerun()
