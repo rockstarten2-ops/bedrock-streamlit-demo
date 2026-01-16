@@ -1,8 +1,9 @@
 import streamlit as st
 import random
+from streamlit.components.v1 import html
 
 # ----------------------------
-# PAGE CONFIG
+# CONFIG
 # ----------------------------
 st.set_page_config(
     page_title="Duggu's Learning World",
@@ -11,7 +12,7 @@ st.set_page_config(
 )
 
 # ----------------------------
-# SESSION STATE INIT
+# SESSION STATE
 # ----------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -23,7 +24,7 @@ if "pending_answer" not in st.session_state:
     st.session_state.pending_answer = None
 
 # ----------------------------
-# DATA
+# CONTENT
 # ----------------------------
 QUESTIONS = {
     "maths": [
@@ -55,7 +56,7 @@ with st.sidebar:
     st.markdown("## 🦁 Duggu’s Learning World")
     st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
     st.markdown("---")
-    st.markdown("💡 **You can say:**")
+    st.markdown("💡 You can say:")
     st.markdown("- maths")
     st.markdown("- science")
     st.markdown("- capitals")
@@ -88,44 +89,66 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # ----------------------------
-# INPUT FORM (FIXED)
+# JS INPUT (ENTER TO SEND)
 # ----------------------------
-with st.form("chat_form", clear_on_submit=True):
-    user_input = st.text_input("Type here 😊")
-    submitted = st.form_submit_button("Send")
+html(
+    """
+    <script>
+    const sendMessage = () => {
+        const input = document.getElementById("kidInput");
+        if (input.value.trim() !== "") {
+            window.parent.postMessage(
+                { type: "duggu_msg", text: input.value },
+                "*"
+            );
+            input.value = "";
+        }
+    };
+    </script>
+
+    <input
+        id="kidInput"
+        placeholder="Type here 😊"
+        style="
+            width:100%;
+            padding:12px;
+            font-size:16px;
+            border-radius:8px;
+            border:1px solid #ccc;
+        "
+        onkeydown="if(event.key==='Enter'){sendMessage();}"
+    />
+    """,
+    height=70
+)
 
 # ----------------------------
-# PROCESS INPUT
+# RECEIVE MESSAGE
 # ----------------------------
-if submitted and user_input.strip():
-    text = user_input.lower().strip()
+msg = st.session_state.get("_incoming")
 
-    st.session_state.messages.append({
-        "role": "user",
-        "content": user_input
-    })
+if msg:
+    text = msg.lower().strip()
+    st.session_state.messages.append({"role": "user", "content": msg})
 
     reply = ""
 
-    # ---- Answering ----
     if st.session_state.pending_answer:
         if text == st.session_state.pending_answer:
             st.session_state.stars += 1
             reply = "🎉 Awesome, Duggu! You earned ⭐ 1 star!"
         else:
             reply = f"Nice try 😊 The correct answer is **{st.session_state.pending_answer.title()}**!"
-
         st.session_state.pending_answer = None
 
-    # ---- Topics ----
     elif "math" in text:
         q, a = random.choice(QUESTIONS["maths"])
-        reply = f"Maths time! 😄\n\n**{q}**"
+        reply = f"Maths time 😄\n\n**{q}**"
         st.session_state.pending_answer = a
 
     elif "science" in text:
         q, a = random.choice(QUESTIONS["science"])
-        reply = f"Science fun! 🔬\n\n**{q}**"
+        reply = f"Science fun 🔬\n\n**{q}**"
         st.session_state.pending_answer = a
 
     elif "capital" in text:
@@ -136,14 +159,33 @@ if submitted and user_input.strip():
     elif "fact" in text or "surprise" in text:
         reply = random.choice(FUN_FACTS)
 
-    # ---- Free Chat ----
     else:
         reply = (
             "That’s a great question, Duggu! 😊\n\n"
             "Ask me about animals, space, maths, Akola, or anything fun!"
         )
 
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": reply
-    })
+    st.session_state.messages.append({"role": "assistant", "content": reply})
+    st.session_state["_incoming"] = None
+    st.experimental_rerun()
+
+# ----------------------------
+# LISTEN TO JS
+# ----------------------------
+st.markdown(
+    """
+    <script>
+    window.addEventListener("message", (event) => {
+        if (event.data.type === "duggu_msg") {
+            const input = event.data.text;
+            fetch("/", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({msg: input})
+            });
+        }
+    });
+    </script>
+    """,
+    unsafe_allow_html=True
+)
