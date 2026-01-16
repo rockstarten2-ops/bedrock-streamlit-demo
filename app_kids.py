@@ -118,6 +118,6 @@ if user_input:
 # ===============================
 for msg in st.session_state.messages:
     if msg["role"] == "user":
-        st.markdown(f"**Aarav:** {msg['content']}")
+        st.markdown(f"**Duggu:** {msg['content']}")
     else:
         st.markdown(f"**🤖 BuddyBot:** {msg['content']}")
