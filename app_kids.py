@@ -19,14 +19,8 @@ if "messages" not in st.session_state:
 if "stars" not in st.session_state:
     st.session_state.stars = 0
 
-if "pending_question" not in st.session_state:
-    st.session_state.pending_question = None
-
 if "pending_answer" not in st.session_state:
     st.session_state.pending_answer = None
-
-if "last_processed" not in st.session_state:
-    st.session_state.last_processed = ""
 
 # ----------------------------
 # DATA
@@ -44,7 +38,7 @@ QUESTIONS = {
     "capitals": [
         ("What is the capital of India?", "delhi"),
         ("Akola is in which Indian state?", "maharashtra"),
-    ]
+    ],
 }
 
 FUN_FACTS = [
@@ -53,8 +47,6 @@ FUN_FACTS = [
     "Mars looks red because of iron dust 🔴",
     "Octopuses have three hearts 🐙",
 ]
-
-CASUAL = ["hi", "hello", "ok", "okay", "yes", "no", "cool", "anything"]
 
 # ----------------------------
 # SIDEBAR
@@ -96,15 +88,16 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # ----------------------------
-# INPUT (KEYED + GUARDED)
+# INPUT FORM (FIXED)
 # ----------------------------
-user_input = st.chat_input("Type here 😊", key="chat_box")
+with st.form("chat_form", clear_on_submit=True):
+    user_input = st.text_input("Type here 😊")
+    submitted = st.form_submit_button("Send")
 
 # ----------------------------
-# PROCESS INPUT (ONLY ONCE)
+# PROCESS INPUT
 # ----------------------------
-if user_input and user_input != st.session_state.last_processed:
-    st.session_state.last_processed = user_input
+if submitted and user_input.strip():
     text = user_input.lower().strip()
 
     st.session_state.messages.append({
@@ -114,41 +107,30 @@ if user_input and user_input != st.session_state.last_processed:
 
     reply = ""
 
-    # ---- Answering Question ----
-    if st.session_state.pending_question:
+    # ---- Answering ----
+    if st.session_state.pending_answer:
         if text == st.session_state.pending_answer:
             st.session_state.stars += 1
             reply = "🎉 Awesome, Duggu! You earned ⭐ 1 star!"
         else:
             reply = f"Nice try 😊 The correct answer is **{st.session_state.pending_answer.title()}**!"
 
-        st.session_state.pending_question = None
         st.session_state.pending_answer = None
-
-    # ---- Casual Talk ----
-    elif text in CASUAL:
-        reply = random.choice(FUN_FACTS + [
-            "I love chatting with you, Duggu! 😄",
-            "You’re doing great, buddy! 🦁",
-        ])
 
     # ---- Topics ----
     elif "math" in text:
         q, a = random.choice(QUESTIONS["maths"])
         reply = f"Maths time! 😄\n\n**{q}**"
-        st.session_state.pending_question = q
         st.session_state.pending_answer = a
 
     elif "science" in text:
         q, a = random.choice(QUESTIONS["science"])
         reply = f"Science fun! 🔬\n\n**{q}**"
-        st.session_state.pending_question = q
         st.session_state.pending_answer = a
 
     elif "capital" in text:
         q, a = random.choice(QUESTIONS["capitals"])
         reply = f"Capital quiz 🌍\n\n**{q}**"
-        st.session_state.pending_question = q
         st.session_state.pending_answer = a
 
     elif "fact" in text or "surprise" in text:
