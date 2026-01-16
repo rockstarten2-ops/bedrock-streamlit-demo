@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 # --------------------
-# SESSION STATE
+# SESSION STATE INIT
 # --------------------
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -19,8 +19,9 @@ if "messages" not in st.session_state:
             "role": "assistant",
             "content": (
                 "Hi Duggu! 👋🦁\n\n"
-                "I’m your learning buddy 😊\n\n"
-                "You can talk to me about animals, space, maths, capitals, or fun facts!"
+                "I’m Buddy, your learning friend 😊\n\n"
+                "You can talk to me about *anything* — "
+                "school, animals, space, stories, or just what you’re thinking!"
             )
         }
     ]
@@ -32,14 +33,11 @@ with st.sidebar:
     st.markdown("## 🦁 Duggu’s Learning World")
     st.markdown("⭐ Stars Earned: 0")
     st.markdown("---")
-    st.markdown("💡 You can say:")
-    st.markdown("- animals")
-    st.markdown("- space")
-    st.markdown("- maths")
-    st.markdown("- science")
-    st.markdown("- capitals")
-    st.markdown("- fun fact")
-    st.markdown("- or just chat 😊")
+    st.markdown("💬 You can:")
+    st.markdown("- Ask questions")
+    st.markdown("- Share ideas")
+    st.markdown("- Learn fun things")
+    st.markdown("- Just chat 😊")
 
 # --------------------
 # CHAT HISTORY
@@ -51,104 +49,71 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # --------------------
-# INPUT (ENTER ONLY)
+# USER INPUT (ENTER ONLY)
 # --------------------
 user_input = st.chat_input("Type here 😊")
 
 if user_input:
+    # Add user message
     st.session_state.messages.append(
         {"role": "user", "content": user_input}
     )
 
-    text = user_input.lower().strip()
+    text = user_input.strip().lower()
 
     # --------------------
-    # NORMALIZE COMMON TYPOS
+    # FRIENDLY RESPONSE LOGIC
     # --------------------
-    if text in ["spave", "spae", "spaace"]:
-        text = "space"
+    acknowledgements = [
+        "That’s interesting, Duggu! 😊",
+        "I like how you’re thinking! 🧠",
+        "That’s a good thought! 😄",
+        "I’m glad you told me that! 🦁"
+    ]
+
+    greetings = [
+        "Hi Duggu! 😄 I’m happy you’re here!",
+        "Hello! 🦁 What’s on your mind today?",
+        "Hey there! 😊 Ready to chat?"
+    ]
+
+    followups = [
+        "Want to hear something cool?",
+        "Should I tell you a fun fact?",
+        "What made you think about that?",
+        "Do you want to learn something new?"
+    ]
+
+    fun_facts = [
+        "Did you know? Octopuses have three hearts 🐙",
+        "Fun fact! Mars looks red because of iron dust 🔴",
+        "Cool one! Tigers have striped skin, not just fur 🐯",
+        "Guess what? The Moon has no air 🌙",
+        "Did you know? Akola is famous for cotton production 🌱"
+    ]
 
     # --------------------
-    # INTENT HANDLING
+    # RESPONSE DECISION
     # --------------------
-
-    # GREETINGS
     if text in ["hi", "hello", "hey", "whatsup", "what's up"]:
-        reply = random.choice([
-            "Hi Duggu! 😄 I’m so happy you’re here!",
-            "Hello! 🦁 Ready to learn something fun?",
-            "Hey there! 😊 What should we explore today?"
-        ])
+        reply = random.choice(greetings)
 
-    # YES / OK / ACKNOWLEDGE
-    elif text in ["yes", "ok", "okay", "sure", "yep"]:
+    elif text in ["ok", "okay", "yes", "yeah", "yep", "hmm"]:
+        reply = random.choice(followups)
+
+    elif "?" in text or text.startswith(("what", "why", "how", "when", "where")):
         reply = (
-            "Awesome! 😄\n\n"
-            "What would you like?\n"
-            "Animals 🐘, Space 🚀, Maths 🧮, Capitals 🌍, or a Fun Fact 🎉?"
+            f"{random.choice(acknowledgements)}\n\n"
+            "Let me explain it in a simple way 😊"
         )
 
-    # ANIMALS
-    elif "animal" in text:
-        reply = random.choice([
-            "Lions live in groups called prides 🦁",
-            "Elephants have amazing memories 🐘",
-            "Dogs can smell much better than humans 🐶"
-        ])
-
-    # SPACE
-    elif "space" in text:
-        reply = random.choice([
-            "Mars is called the Red Planet 🔴",
-            "The Moon goes around the Earth 🌙",
-            "Astronauts float because there is no gravity 🚀"
-        ])
-
-    # MATHS
-    elif "math" in text:
-        reply = random.choice([
-            "Let’s try one! What is 5 + 4?",
-            "Maths time! 🧮 What is 10 − 3?",
-            "Can you solve this? What is 6 × 2?"
-        ])
-
-    # SCIENCE
-    elif "science" in text:
-        reply = random.choice([
-            "Plants need sunlight and water to grow 🌱",
-            "We breathe oxygen to live 💨",
-            "The Sun gives us heat and light ☀️"
-        ])
-
-    # CAPITALS
-    elif "capital" in text:
-        reply = random.choice([
-            "What is the capital of India?",
-            "Do you know the capital of Maharashtra?",
-            "What is the capital of France?"
-        ])
-
-    # FUN FACT
-    elif "fact" in text or "fun" in text or "surprise" in text:
-        reply = random.choice([
-            "Octopuses have three hearts 🐙",
-            "Butterflies taste with their feet 🦋",
-            "Akola is famous for cotton 🌱"
-        ])
-
-    # SMALL TALK
-    elif text in ["how r u", "how are you"]:
-        reply = "I’m great, Duggu! 😊 Thanks for asking!"
-
-    # FALLBACK (SMART)
     else:
         reply = (
-            "That’s interesting, Duggu! 😊\n\n"
-            "You can say animals, space, maths, capitals, or fun fact!"
+            f"{random.choice(acknowledgements)}\n\n"
+            f"{random.choice(fun_facts)}"
         )
 
+    # Add assistant reply
     st.session_state.messages.append(
         {"role": "assistant", "content": reply}
     )
-
-    st.rerun()
