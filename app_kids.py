@@ -3,82 +3,82 @@ import boto3
 import json
 import random
 
-# -----------------------------
+# ---------------------------------
 # PAGE CONFIG
-# -----------------------------
+# ---------------------------------
 st.set_page_config(
     page_title="Duggu’s Learning Buddy",
     layout="centered"
 )
 
-# -----------------------------
-# PREMIUM KID UI CSS
-# -----------------------------
+# ---------------------------------
+# BASIC CLEAN UI
+# ---------------------------------
 st.markdown("""
 <style>
 body {
-    background-color: #FAFAFA;
+    background-color: #ffffff;
 }
-.chat-card {
-    padding: 14px 18px;
-    border-radius: 14px;
-    margin-bottom: 10px;
+.chat {
+    padding: 10px 0;
     font-size: 16px;
-    line-height: 1.4;
 }
 .user {
-    background-color: #E3F2FD;
+    margin-bottom: 10px;
 }
 .bot {
-    background-color: #FFF8E1;
-}
-.header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-.stars {
-    text-align: center;
-    font-size: 18px;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
+# ---------------------------------
+# SIDEBAR (STARS ONLY)
+# ---------------------------------
+with st.sidebar:
+    st.markdown("### ⭐ Rewards")
+    if "stars" not in st.session_state:
+        st.session_state.stars = 0
+    st.markdown(f"**Stars earned:** {st.session_state.stars}")
+
+# ---------------------------------
 # HEADER
-# -----------------------------
+# ---------------------------------
 st.markdown("""
-<div class="header">
-<h1>Hi Duggu! 👋</h1>
+<div style="text-align:center; margin-bottom:25px;">
+<h1>Hi Duggu! 👋🐯</h1>
 <h3>I’m your learning buddy 😊</h3>
 <p>We’ll learn using games, stories, and fun questions!</p>
 <p style="color:gray;">Created with love by your dad ❤️</p>
 </div>
 """, unsafe_allow_html=True)
 
-# -----------------------------
+# ---------------------------------
 # SESSION STATE
-# -----------------------------
+# ---------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-if "stars" not in st.session_state:
-    st.session_state.stars = 0
 
 if "awaiting_answer" not in st.session_state:
     st.session_state.awaiting_answer = False
 
-# -----------------------------
-# STAR DISPLAY
-# -----------------------------
-st.markdown(
-    f"<div class='stars'>⭐ Stars earned: {st.session_state.stars}</div>",
-    unsafe_allow_html=True
-)
+# ---------------------------------
+# DISPLAY CHAT (ORDER SAFE)
+# ---------------------------------
+for msg in st.session_state.messages:
+    if msg["role"] == "user":
+        st.markdown(f"<div class='chat user'>🧒 <b>Duggu:</b> {msg['content']}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='chat bot'>🐯 <b>Buddy:</b> {msg['content']}</div>", unsafe_allow_html=True)
 
-# -----------------------------
+# ---------------------------------
+# INPUT
+# ---------------------------------
+user_input = st.chat_input("Type your answer here 😊")
+
+# ---------------------------------
 # BEDROCK CLIENT
-# -----------------------------
+# ---------------------------------
 bedrock = boto3.client(
     service_name="bedrock-runtime",
     region_name="us-east-1"
@@ -86,38 +86,22 @@ bedrock = boto3.client(
 
 MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
 
-# -----------------------------
-# DISPLAY CHAT (LIMIT SCROLL)
-# -----------------------------
-for msg in st.session_state.messages[-6:]:
-    css = "user" if msg["role"] == "user" else "bot"
-    st.markdown(
-        f"<div class='chat-card {css}'>{msg['content']}</div>",
-        unsafe_allow_html=True
-    )
-
-# -----------------------------
-# INPUT BOX (BOTTOM)
-# -----------------------------
-user_input = st.chat_input("Type your answer here 😊")
-
-# -----------------------------
-# HANDLE INPUT
-# -----------------------------
+# ---------------------------------
+# HANDLE INPUT (FIXED ORDER)
+# ---------------------------------
 if user_input:
+    # 1️⃣ Save user message
     st.session_state.messages.append({
         "role": "user",
-        "content": f"🧒 {user_input}"
+        "content": user_input
     })
 
-    # Reward only AFTER child answers
-    reward_text = ""
+    # 2️⃣ Reward ONLY after child answers a question
     if st.session_state.awaiting_answer:
         st.session_state.stars += 1
-        reward_text = "\n\n⭐ You earned a star!"
         st.session_state.awaiting_answer = False
 
-    # Rotate learning themes invisibly
+    # 3️⃣ Rotate learning internally
     learning_modes = [
         "maths",
         "india_capitals",
@@ -125,25 +109,26 @@ if user_input:
         "rajasthan_history",
         "fun_quiz"
     ]
-    selected_mode = random.choice(learning_modes)
+    mode = random.choice(learning_modes)
 
     system_prompt = f"""
-You are a learning buddy for a Grade 4 child named Duggu.
+You are a fun, kind learning buddy for a Grade 4 child named Duggu.
 
 RULES:
-- VERY short answers (1–3 sentences)
-- Simple words
-- Ask ONLY one question
+- Use Duggu’s name often
+- 1–2 short sentences only
+- Ask ONE question at a time
 - Friendly, playful tone
-- No long explanations
+- Simple words
+- Never long explanations
 
-LEARNING MODE (do not say this to child): {selected_mode}
+LEARNING MODE (internal): {mode}
 
-KNOWLEDGE YOU CAN USE:
+KNOWLEDGE:
 - Indian state capitals
 - Southeast Asia capitals
-- Rajasthan history stories (Prithviraj Chauhan, bravery, values)
-- Basic maths and fun quizzes
+- Rajasthan history (Prithviraj Chauhan, bravery stories)
+- Basic maths & fun quizzes
 
 If you ask a question, wait for Duggu’s answer.
 """
@@ -151,9 +136,12 @@ If you ask a question, wait for Duggu’s answer.
     payload = {
         "anthropic_version": "bedrock-2023-05-31",
         "messages": [
-            {"role": "user", "content": system_prompt + "\nChild says: " + user_input}
+            {
+                "role": "user",
+                "content": system_prompt + "\nDuggu says: " + user_input
+            }
         ],
-        "max_tokens": 140,
+        "max_tokens": 120,
         "temperature": 0.6
     }
 
@@ -166,15 +154,18 @@ If you ask a question, wait for Duggu’s answer.
         )
         reply = json.loads(response["body"].read())["content"][0]["text"]
 
+        # Detect if bot asked a question
         if "?" in reply:
             st.session_state.awaiting_answer = True
 
-        reply += reward_text
-
     except Exception:
-        reply = "Oops 😅 Let’s try again!"
+        reply = "Oops Duggu 😅 Let’s try again!"
 
+    # 4️⃣ Save assistant reply immediately
     st.session_state.messages.append({
         "role": "assistant",
-        "content": f"🤖 {reply}"
+        "content": reply
     })
+
+    # 5️⃣ Force rerender (keeps order correct)
+    st.rerun()
