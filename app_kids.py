@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # =====================================================
-# Header (UI ONLY — NOT sent to Claude)
+# Header (UI ONLY)
 # =====================================================
 st.markdown(
     """
@@ -44,7 +44,6 @@ selected_topic = st.sidebar.radio(
     topics
 )
 
-# UI-only helper message (SAFE)
 st.info(
     f"🎉 Awesome choice, Duggu! Let’s learn **{selected_topic}**. "
     "Type what you want to start with below 👇"
@@ -64,15 +63,14 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 # =====================================================
-# Chat Input (BOTTOM like ChatGPT)
+# Chat Input (BOTTOM)
 # =====================================================
 user_input = st.chat_input("Type your question here...")
 
+# =====================================================
+# ADD USER MESSAGE
+# =====================================================
 if user_input:
-    # -------------------------------
-    # Add USER message first
-    # (Claude REQUIRES this)
-    # -------------------------------
     st.session_state.messages.append({
         "role": "user",
         "content": user_input
@@ -80,6 +78,15 @@ if user_input:
 
     with st.chat_message("user"):
         st.markdown(user_input)
+
+# =====================================================
+# 🚨 CRITICAL GUARD — DO NOT REMOVE
+# Only call Claude if LAST message is USER
+# =====================================================
+if (
+    st.session_state.messages
+    and st.session_state.messages[-1]["role"] == "user"
+):
 
     # =================================================
     # Bedrock Client
@@ -90,19 +97,19 @@ if user_input:
     )
 
     # =================================================
-    # Build Claude 3 Messages (CORRECT FORMAT)
+    # Build Claude Messages (VALIDATED)
     # =================================================
-    messages = []
-    for m in st.session_state.messages:
-        messages.append({
+    messages = [
+        {
             "role": m["role"],
-            "content": [
-                {"type": "text", "text": m["content"]}
-            ]
-        })
+            "content": [{"type": "text", "text": m["content"]}]
+        }
+        for m in st.session_state.messages
+        if m["role"] in ("user", "assistant")
+    ]
 
     # =================================================
-    # Invoke Claude 3 Sonnet (CORRECT PAYLOAD)
+    # Invoke Claude 3 Sonnet
     # =================================================
     response = bedrock.invoke_model(
         modelId="anthropic.claude-3-sonnet-20240229-v1:0",
@@ -124,9 +131,6 @@ if user_input:
     result = json.loads(response["body"].read())
     assistant_reply = result["content"][0]["text"]
 
-    # =================================================
-    # Show Assistant Response
-    # =================================================
     with st.chat_message("assistant"):
         st.markdown(assistant_reply)
 
