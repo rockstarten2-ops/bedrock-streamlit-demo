@@ -42,7 +42,7 @@ with st.sidebar:
     st.markdown("- or just chat 😊")
 
 # --------------------
-# CHAT DISPLAY
+# CHAT HISTORY
 # --------------------
 for msg in st.session_state.messages:
     if msg["role"] == "user":
@@ -51,7 +51,7 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # --------------------
-# USER INPUT (ENTER WORKS)
+# INPUT (ENTER ONLY)
 # --------------------
 user_input = st.chat_input("Type here 😊")
 
@@ -62,47 +62,65 @@ if user_input:
 
     text = user_input.lower().strip()
 
-    # ---- GREETINGS ----
-    if text in ["hi", "hello", "hey", "whatsup", "what's up", "how r u", "how are you"]:
+    # --------------------
+    # NORMALIZE COMMON TYPOS
+    # --------------------
+    if text in ["spave", "spae", "spaace"]:
+        text = "space"
+
+    # --------------------
+    # INTENT HANDLING
+    # --------------------
+
+    # GREETINGS
+    if text in ["hi", "hello", "hey", "whatsup", "what's up"]:
         reply = random.choice([
-            "Hi Duggu! 😄 I’m feeling happy because you’re here!",
-            "Hello! 🦁 Ready to learn something fun today?",
-            "I’m great! 😊 What would you like to talk about?"
+            "Hi Duggu! 😄 I’m so happy you’re here!",
+            "Hello! 🦁 Ready to learn something fun?",
+            "Hey there! 😊 What should we explore today?"
         ])
 
-    # ---- ANIMALS ----
-    elif "animal" in text or text == "animals":
+    # YES / OK / ACKNOWLEDGE
+    elif text in ["yes", "ok", "okay", "sure", "yep"]:
+        reply = (
+            "Awesome! 😄\n\n"
+            "What would you like?\n"
+            "Animals 🐘, Space 🚀, Maths 🧮, Capitals 🌍, or a Fun Fact 🎉?"
+        )
+
+    # ANIMALS
+    elif "animal" in text:
         reply = random.choice([
             "Lions live in groups called prides 🦁",
-            "Elephants are the largest land animals 🐘",
-            "A group of fish is called a school 🐟"
+            "Elephants have amazing memories 🐘",
+            "Dogs can smell much better than humans 🐶"
         ])
 
-    # ---- SPACE ----
+    # SPACE
     elif "space" in text:
         reply = random.choice([
             "Mars is called the Red Planet 🔴",
-            "The Sun is a star ☀️",
-            "Astronauts float in space because there is no gravity 🚀"
+            "The Moon goes around the Earth 🌙",
+            "Astronauts float because there is no gravity 🚀"
         ])
 
-    # ---- MATHS ----
+    # MATHS
     elif "math" in text:
         reply = random.choice([
-            "Let’s try! What is 5 + 4?",
+            "Let’s try one! What is 5 + 4?",
             "Maths time! 🧮 What is 10 − 3?",
             "Can you solve this? What is 6 × 2?"
         ])
 
-    # ---- SCIENCE ----
+    # SCIENCE
     elif "science" in text:
         reply = random.choice([
             "Plants need sunlight and water to grow 🌱",
-            "We breathe oxygen to stay alive 💨",
+            "We breathe oxygen to live 💨",
             "The Sun gives us heat and light ☀️"
         ])
 
-    # ---- CAPITALS ----
+    # CAPITALS
     elif "capital" in text:
         reply = random.choice([
             "What is the capital of India?",
@@ -110,19 +128,23 @@ if user_input:
             "What is the capital of France?"
         ])
 
-    # ---- FUN FACT ----
+    # FUN FACT
     elif "fact" in text or "fun" in text or "surprise" in text:
         reply = random.choice([
             "Octopuses have three hearts 🐙",
-            "Akola is famous for cotton 🌱",
-            "Butterflies taste with their feet 🦋"
+            "Butterflies taste with their feet 🦋",
+            "Akola is famous for cotton 🌱"
         ])
 
-    # ---- DEFAULT CHAT ----
+    # SMALL TALK
+    elif text in ["how r u", "how are you"]:
+        reply = "I’m great, Duggu! 😊 Thanks for asking!"
+
+    # FALLBACK (SMART)
     else:
         reply = (
             "That’s interesting, Duggu! 😊\n\n"
-            "You can ask me about animals, space, maths, capitals, or fun facts!"
+            "You can say animals, space, maths, capitals, or fun fact!"
         )
 
     st.session_state.messages.append(
