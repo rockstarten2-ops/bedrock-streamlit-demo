@@ -3,121 +3,159 @@ import boto3
 import json
 
 # ===============================
-# Page Config
+# Page config
 # ===============================
 st.set_page_config(
-    page_title="Duggu's Learning Buddy",
+    page_title="Hi Duggu!",
+    page_icon="🤖",
     layout="centered"
 )
 
 # ===============================
-# Header UI
+# Header with Mascot
 # ===============================
-st.title("Hi Duggu! 👋")
-st.subheader("I’m your learning buddy 🤖")
 st.markdown(
-    "Ask me a question or tell me what you're learning in school. "
+    """
+    <div style="display:flex; align-items:center; gap:15px;">
+        <div style="font-size:60px;">🤖</div>
+        <div>
+            <h2 style="margin-bottom:0;">Hi Duggu! 👋</h2>
+            <p style="margin-top:4px; font-size:18px;">
+                I’m your learning buddy 😊
+            </p>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    "Ask me a question or choose a topic below. "
     "We’ll figure it out together!"
 )
 
 st.divider()
 
 # ===============================
-# Bedrock Client (UNCHANGED MODEL)
-# ===============================
-bedrock = boto3.client(
-    service_name="bedrock-runtime",
-    region_name="us-east-1"
-)
-
-MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
-
-# ===============================
-# System Prompt (Grade 4 Persona)
-# ===============================
-SYSTEM_PROMPT = """
-You are a friendly learning helper for a Grade 4 student named Duggu.
-
-Rules:
-- Use simple words and short sentences.
-- Explain things step by step.
-- Ask Aarav questions to help him think.
-- Be kind, patient, and encouraging.
-- Never make Aarav feel bad for mistakes.
-
-Learning rules:
-- Do NOT just give homework answers.
-- Give hints and examples instead.
-- Ask questions like "What do you think?" or "Let’s try together."
-
-Safety rules:
-- Only kid-friendly topics.
-- No adult, violent, or scary content.
-- No medical or personal advice.
-
-You are Aarav’s learning buddy, not a strict teacher.
-"""
-
-# ===============================
-# Session State
+# Initialize session state
 # ===============================
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {
+            "role": "assistant",
+            "content": "Hi Duggu! What would you like to learn today? 📚"
+        }
+    ]
 
 # ===============================
-# User Input
+# Topic buttons (Kid-friendly)
 # ===============================
-user_input = st.text_input(
-    "What would you like help with today?",
-    placeholder="Math, reading, science, or a question..."
-)
+st.markdown("### Choose a topic 👇")
 
-# ===============================
-# Call Claude Sonnet
-# ===============================
-def call_claude(user_message):
-    payload = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "system": SYSTEM_PROMPT,
-        "messages": [
-            {
-                "role": "user",
-                "content": user_message
-            }
-        ],
-        "max_tokens": 500,
-        "temperature": 0.5
-    }
+col1, col2, col3, col4 = st.columns(4)
 
-    response = bedrock.invoke_model(
-        modelId=MODEL_ID,
-        body=json.dumps(payload),
-        contentType="application/json"
-    )
+topic = None
 
-    response_body = json.loads(response["body"].read())
-    return response_body["content"][0]["text"]
+with col1:
+    if st.button("➕ Maths"):
+        topic = "Maths"
 
-# ===============================
-# Handle Conversation
-# ===============================
-if user_input:
-    st.session_state.messages.append(
-        {"role": "user", "content": user_input}
-    )
+with col2:
+    if st.button("🔬 Science"):
+        topic = "Science"
 
-    with st.spinner("Thinking... 🤔"):
-        assistant_reply = call_claude(user_input)
+with col3:
+    if st.button("📖 English"):
+        topic = "English"
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": assistant_reply}
-    )
+with col4:
+    if st.button("🌍 GK"):
+        topic = "General Knowledge"
+
+if topic:
+    st.session_state.messages.append({
+        "role": "user",
+        "content": f"I want to learn {topic}"
+    })
+
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": f"Awesome choice, Duggu! 😄 Let’s learn {topic}. What would you like to start with?"
+    })
 
 # ===============================
-# Display Chat History
+# Display chat history
 # ===============================
 for msg in st.session_state.messages:
-    if msg["role"] == "user":
-        st.markdown(f"**Duggu:** {msg['content']}")
-    else:
-        st.markdown(f"**🤖 BuddyBot:** {msg['content']}")
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# ===============================
+# Chat input (fixed at bottom)
+# ===============================
+user_input = st.chat_input("Type your question here...")
+
+if user_input:
+    st.session_state.messages.append({
+        "role": "user",
+        "content": user_input
+    })
+
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    # ===============================
+    # Claude Sonnet (UNCHANGED)
+    # ===============================
+    bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+    system_prompt = (
+        "You are a friendly, patient learning buddy for a Grade 4 student named Duggu. "
+        "Explain concepts very simply, use examples, emojis when helpful, "
+        "and encourage curiosity. Never use advanced language."
+    )
+
+    conversation = [
+        {"role": "system", "content": system_prompt}
+    ]
+
+    for m in st.session_state.messages:
+        conversation.append({
+            "role": m["role"],
+            "content": m["content"]
+        })
+
+    response = bedrock.invoke_model(
+        modelId="anthropic.claude-3-sonnet-20240229-v1:0",
+        contentType="application/json",
+        accept="application/json",
+        body=json.dumps({
+            "messages": conversation,
+            "max_tokens": 500,
+            "temperature": 0.5
+        })
+    )
+
+    result = json.loads(response["body"].read())
+    assistant_reply = result["content"][0]["text"]
+
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": assistant_reply
+    })
+
+    with st.chat_message("assistant"):
+        st.markdown(assistant_reply)
+
+# ===============================
+# Footer (Dad's note ❤️)
+# ===============================
+st.divider()
+st.markdown(
+    """
+    <div style="text-align:center; font-size:14px; color:gray;">
+        ❤️ Created with love by your Dad ❤️
+    </div>
+    """,
+    unsafe_allow_html=True
+)
