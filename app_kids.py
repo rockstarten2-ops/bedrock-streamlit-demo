@@ -14,46 +14,23 @@ st.set_page_config(
 # SESSION STATE
 # --------------------
 if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-if "stars" not in st.session_state:
-    st.session_state.stars = 0
-
-if "pending_answer" not in st.session_state:
-    st.session_state.pending_answer = None
-
-# --------------------
-# DATA
-# --------------------
-QUESTIONS = {
-    "maths": [
-        ("What is 7 + 5?", "12"),
-        ("What is 8 + 7?", "15"),
-        ("What is 9 × 3?", "27"),
-    ],
-    "science": [
-        ("Which planet is called the Red Planet?", "mars"),
-        ("What gas do plants breathe in?", "carbon dioxide"),
-    ],
-    "capitals": [
-        ("What is the capital of India?", "delhi"),
-        ("Akola is in which Indian state?", "maharashtra"),
-    ],
-}
-
-FUN_FACTS = [
-    "Lions live in groups called *prides* 🦁",
-    "Akola is famous for cotton production 🌱",
-    "Mars looks red because of iron dust 🔴",
-    "Octopuses have three hearts 🐙",
-]
+    st.session_state.messages = [
+        {
+            "role": "assistant",
+            "content": (
+                "Hi Duggu! 👋🦁\n\n"
+                "I’m your learning buddy 😊\n\n"
+                "You can ask me about maths, science, capitals, animals, or fun facts!"
+            )
+        }
+    ]
 
 # --------------------
 # SIDEBAR
 # --------------------
 with st.sidebar:
     st.markdown("## 🦁 Duggu’s Learning World")
-    st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
+    st.markdown("⭐ Stars Earned: 0")
     st.markdown("---")
     st.markdown("💡 You can say:")
     st.markdown("- maths")
@@ -63,23 +40,7 @@ with st.sidebar:
     st.markdown("- or ask anything 😊")
 
 # --------------------
-# HEADER
-# --------------------
-st.markdown(
-    """
-    <div style="text-align:center;">
-        <h1>Hi Duggu! 👋</h1>
-        <h3>I’m your learning buddy 😊</h3>
-        <p>We’ll learn with games, stories, and fun questions!</p>
-        <p><i>Created with love by your dad ❤️</i></p>
-        <hr>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# --------------------
-# CHAT HISTORY
+# CHAT DISPLAY
 # --------------------
 for msg in st.session_state.messages:
     if msg["role"] == "user":
@@ -88,54 +49,54 @@ for msg in st.session_state.messages:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
 # --------------------
-# INPUT FORM (THE FIX)
+# USER INPUT (ENTER WORKS)
 # --------------------
-with st.form("chat_form", clear_on_submit=True):
-    user_input = st.text_input("Type here 😊")
-    submitted = st.form_submit_button("Send")
+user_input = st.chat_input("Type here 😊")
 
-if submitted and user_input.strip():
-    text = user_input.lower().strip()
+if user_input:
     st.session_state.messages.append(
         {"role": "user", "content": user_input}
     )
 
-    reply = ""
+    text = user_input.lower()
 
-    if st.session_state.pending_answer:
-        if text == st.session_state.pending_answer:
-            st.session_state.stars += 1
-            reply = "🎉 Amazing, Duggu! You earned ⭐ 1 star!"
-        else:
-            reply = f"Nice try 😊 The correct answer is **{st.session_state.pending_answer.title()}**!"
-        st.session_state.pending_answer = None
-
-    elif "math" in text:
-        q, a = random.choice(QUESTIONS["maths"])
-        reply = f"Maths time 😄\n\n**{q}**"
-        st.session_state.pending_answer = a
+    if "math" in text:
+        reply = random.choice([
+            "Let’s do maths! 😊 What is 5 + 3?",
+            "Maths time! 🧮 What is 10 − 4?",
+            "Try this: What is 6 × 2?"
+        ])
 
     elif "science" in text:
-        q, a = random.choice(QUESTIONS["science"])
-        reply = f"Science fun 🔬\n\n**{q}**"
-        st.session_state.pending_answer = a
+        reply = random.choice([
+            "Science is fun! 🔬 Which planet is called the Red Planet?",
+            "What gas do plants breathe in?",
+            "Why do we need the Sun?"
+        ])
 
     elif "capital" in text:
-        q, a = random.choice(QUESTIONS["capitals"])
-        reply = f"Capital quiz 🌍\n\n**{q}**"
-        st.session_state.pending_answer = a
+        reply = random.choice([
+            "What is the capital of India?",
+            "Do you know the capital of Maharashtra?",
+            "What is the capital of France?"
+        ])
 
     elif "fact" in text or "surprise" in text:
-        reply = random.choice(FUN_FACTS)
+        reply = random.choice([
+            "Lions live in groups called prides 🦁",
+            "Octopuses have three hearts 🐙",
+            "Mars looks red because of iron dust 🔴",
+            "Akola is famous for cotton 🌱"
+        ])
 
     else:
         reply = (
-            "That’s a great question, Duggu! 😊\n\n"
-            "Ask me about animals, space, maths, Akola, or anything fun!"
+            "That’s interesting, Duggu! 😊\n\n"
+            "You can ask me about maths, science, capitals, animals, or fun facts!"
         )
 
     st.session_state.messages.append(
         {"role": "assistant", "content": reply}
     )
 
-    st.rerun()
+    st.experimental_rerun()
