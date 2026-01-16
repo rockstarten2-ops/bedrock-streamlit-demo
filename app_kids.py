@@ -6,29 +6,29 @@ import random
 # -----------------------------
 st.set_page_config(
     page_title="Duggu’s Learning World",
-    page_icon="🧸",
+    page_icon="🦁",
     layout="wide"
 )
 
 # -----------------------------
 # SESSION STATE
 # -----------------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "chat" not in st.session_state:
+    st.session_state.chat = []
 
 if "stars" not in st.session_state:
     st.session_state.stars = 0
 
-if "asked_questions" not in st.session_state:
-    st.session_state.asked_questions = set()
+if "current_answer" not in st.session_state:
+    st.session_state.current_answer = None
 
-if "current_topic" not in st.session_state:
-    st.session_state.current_topic = None
+if "asked" not in st.session_state:
+    st.session_state.asked = set()
 
 # -----------------------------
-# QUESTION BANK (STARTER)
+# QUESTION STARTERS (NOT LIMITS)
 # -----------------------------
-QUESTIONS = {
+QUESTION_SEEDS = {
     "Maths": [
         ("What is 7 + 5?", "12"),
         ("What is 8 + 7?", "15"),
@@ -43,86 +43,61 @@ QUESTIONS = {
         ("Akola is in which Indian state?", "maharashtra"),
         ("What is the capital of Thailand?", "bangkok"),
     ],
-    "Games": [
-        ("I’m thinking of a number between 1 and 10. Is it 5?", None),
-    ],
     "Stories": [
         ("Do you want to hear a brave story about Prithviraj Chauhan?", None),
     ]
 }
 
 # -----------------------------
-# HELPERS
+# CHAT HELPERS (NO STREAMLIT CHAT)
 # -----------------------------
-def buddy_say(text):
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": f"🧸 **Buddy:** {text}"
-    })
+def buddy(text):
+    st.session_state.chat.append(f"🦁 **Buddy:** {text}")
 
-def duggu_say(text):
-    st.session_state.messages.append({
-        "role": "user",
-        "content": f"🧒 **Duggu:** {text}"
-    })
+def duggu(text):
+    st.session_state.chat.append(f"🧒 **Duggu:** {text}")
 
-def ask_new_question(topic):
-    available = [
-        q for q in QUESTIONS.get(topic, [])
-        if q[0] not in st.session_state.asked_questions
+def ask_question(topic):
+    pool = [
+        q for q in QUESTION_SEEDS.get(topic, [])
+        if q[0] not in st.session_state.asked
     ]
 
-    if not available:
-        buddy_say("Awesome learning, Duggu! 🎉 Want to try something else or ask me anything?")
+    if not pool:
+        buddy("You’re doing awesome, Duggu! 🌟 Ask me anything or choose another topic.")
         return
 
-    question, answer = random.choice(available)
-    st.session_state.asked_questions.add(question)
-
-    buddy_say(f"Hey Duggu 😊 {question}")
-    st.session_state.current_answer = answer
-
-def handle_answer(user_text):
-    answer = st.session_state.get("current_answer")
-
-    if answer is None:
-        buddy_say("That’s interesting, Duggu! 😄 Tell me more or ask me anything.")
-        return
-
-    if user_text.strip().lower() == answer:
-        st.session_state.stars += 1
-        buddy_say(f"🎉 Great job, Duggu! You earned ⭐ 1 star!")
-    else:
-        buddy_say("Nice try, Duggu 💪 Learning is about trying!")
-
-    st.session_state.current_answer = None
+    q, ans = random.choice(pool)
+    st.session_state.asked.add(q)
+    st.session_state.current_answer = ans
+    buddy(f"Hey Duggu 😊 {q}")
 
 # -----------------------------
-# SIDEBAR
+# SIDEBAR (CLEAN, CLICKABLE)
 # -----------------------------
 with st.sidebar:
-    st.title("🧸 Duggu’s Learning World")
+    st.markdown("## 🦁 Duggu’s Learning World")
+    st.markdown(f"### ⭐ Stars Earned: **{st.session_state.stars}**")
+    st.markdown("---")
 
-    st.markdown("### 🌟 Stars Earned")
-    st.markdown(f"**⭐ {st.session_state.stars}**")
+    if st.button("➕ Maths"):
+        buddy("Maths time! Let’s have fun with numbers 🎯")
+        ask_question("Maths")
+
+    if st.button("🔬 Science"):
+        buddy("Science is awesome! 🔭 Let’s explore")
+        ask_question("Science")
+
+    if st.button("🌍 Capitals"):
+        buddy("Let’s travel the world, Duggu ✈️")
+        ask_question("Capitals")
+
+    if st.button("📖 Stories"):
+        buddy("Story time! 📜 Ready for a brave tale?")
+        ask_question("Stories")
 
     st.markdown("---")
-    st.markdown("### 🎯 Explore")
-
-    def topic_link(label, topic):
-        if st.button(label, use_container_width=True):
-            st.session_state.current_topic = topic
-            buddy_say(f"Yay Duggu! Let’s explore **{topic}** together 🚀")
-            ask_new_question(topic)
-
-    topic_link("➕ Maths", "Maths")
-    topic_link("🔬 Science", "Science")
-    topic_link("🌍 Capitals", "Capitals")
-    topic_link("🎮 Games", "Games")
-    topic_link("📖 Stories", "Stories")
-
-    st.markdown("---")
-    st.markdown("💡 *Ask me anything — even fun facts about Akola!* 😄")
+    st.caption("Ask anything — even fun facts about Akola 😊")
 
 # -----------------------------
 # MAIN HEADER
@@ -131,30 +106,35 @@ st.markdown("## Hi Duggu! 👋")
 st.markdown("### I’m your learning buddy 😊")
 st.markdown("We’ll learn with games, stories, and fun questions!")
 st.markdown("_Created with love by your dad ❤️_")
-
 st.markdown("---")
 
 # -----------------------------
-# CHAT HISTORY
+# CHAT DISPLAY
 # -----------------------------
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+for line in st.session_state.chat:
+    st.markdown(line)
 
 # -----------------------------
-# USER INPUT (FREE CHAT)
+# USER INPUT (SINGLE FLOW)
 # -----------------------------
-user_input = st.chat_input("Ask me anything 😊")
+user_input = st.text_input("Type here 😊", key="input")
 
 if user_input:
-    duggu_say(user_input)
+    duggu(user_input)
 
-    if st.session_state.get("current_answer") is not None:
-        handle_answer(user_input)
+    if st.session_state.current_answer is not None:
+        if user_input.strip().lower() == st.session_state.current_answer:
+            st.session_state.stars += 1
+            buddy("🎉 Fantastic, Duggu! You earned ⭐ 1 star!")
+        else:
+            buddy("Nice try, Duggu 💪 That was a tricky one!")
+
+        st.session_state.current_answer = None
+
     else:
-        # Free chat (age-safe)
-        buddy_say(
-            "That’s a great question, Duggu! 🤗 "
-            "I love how curious you are. "
-            "Want a fun question or a story next?"
+        buddy(
+            "That’s a great thought, Duggu 😄 "
+            "You can ask me questions, play games, or click a topic!"
         )
+
+    st.experimental_rerun()
