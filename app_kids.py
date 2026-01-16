@@ -1,117 +1,188 @@
 import streamlit as st
+import boto3
+import json
 import random
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(page_title="Duggu’s Learning Buddy", layout="centered")
+# ---------------------------
+# PAGE CONFIG
+# ---------------------------
+st.set_page_config(
+    page_title="Hi Duggu!",
+    page_icon="🧠",
+    layout="centered"
+)
 
-# ---------------- SESSION STATE ----------------
+# ---------------------------
+# SESSION STATE
+# ---------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "stars" not in st.session_state:
     st.session_state.stars = 0
 
-if "asked_questions" not in st.session_state:
-    st.session_state.asked_questions = set()
+if "question" not in st.session_state:
+    st.session_state.question = None
 
-if "question_counter" not in st.session_state:
-    st.session_state.question_counter = 0
+if "answer" not in st.session_state:
+    st.session_state.answer = None
 
-if "awaiting_answer" not in st.session_state:
-    st.session_state.awaiting_answer = False
+if "turns" not in st.session_state:
+    st.session_state.turns = 0
 
-if "current_question" not in st.session_state:
-    st.session_state.current_question = ""
+# ---------------------------
+# AWS BEDROCK CLIENT
+# ---------------------------
+bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
 
-# ---------------- SIDEBAR ----------------
-with st.sidebar:
-    st.markdown("### 🎯 Topics")
-    st.markdown("• Maths\n• Science\n• Capitals\n• Games\n• Stories")
-    st.markdown("---")
-    st.markdown(f"### ⭐ Stars Earned: {st.session_state.stars}")
-
-# ---------------- HEADER ----------------
-st.markdown("""
-<div style="text-align:center;">
-<h1>Hi Duggu! 👋🐯</h1>
-<h3>I’m your learning buddy 😊</h3>
-<p>We’ll learn using games, fun facts & stories!</p>
-<p style="color:gray;">Created with love by your dad ❤️</p>
-</div>
-""", unsafe_allow_html=True)
-
-st.markdown("---")
-
-# ---------------- QUESTION BANK ----------------
-QUESTION_BANK = [
-    ("What is 8 + 6?", "14"),
-    ("What is 9 × 3?", "27"),
-    ("Which planet is called the Red Planet?", "mars"),
-    ("What is the capital of India?", "delhi"),
-    ("What is the capital of Maharashtra?", "mumbai"),
-    ("What is the capital of Rajasthan?", "jaipur"),
-    ("Duggu, do you know which city is called the Pink City?", "jaipur"),
-    ("Akola is in which Indian state?", "maharashtra"),
-    ("Who was the brave king Prithviraj Chauhan?", "king"),
-    ("Let’s play! Tell me a number between 1 and 10 😊", None),
+# ---------------------------
+# PHRASES (VARIETY!)
+# ---------------------------
+ENCOURAGEMENTS = [
+    "Awesome thinking, Duggu! 🌟",
+    "You’re doing great, buddy! 💪",
+    "Nice try, Duggu! 😄",
+    "Learning champ! 🏆",
+    "High five, Duggu! ✋"
 ]
 
-def get_next_question():
-    remaining = [q for q in QUESTION_BANK if q[0] not in st.session_state.asked_questions]
-    if not remaining:
-        st.session_state.asked_questions.clear()
-        remaining = QUESTION_BANK
-    return random.choice(remaining)
+TRY_AGAIN = [
+    "That’s okay! Want a hint or try something else?",
+    "Good effort! Let’s keep learning together 😊",
+    "No worries at all — learning is about trying!"
+]
 
-# ---------------- SHOW CHAT ----------------
-for msg in st.session_state.messages:
-    if msg["role"] == "user":
-        st.markdown(f"🧒 **Duggu:** {msg['content']}")
+CHANGE_TOPIC_PROMPTS = [
+    "Want to switch topics or keep going?",
+    "Should we mix things up now?",
+    "What would you like to try next?"
+]
+
+# ---------------------------
+# QUESTION BANK
+# ---------------------------
+QUESTIONS = [
+    # Maths
+    {"q": "What is 8 + 7?", "a": "15"},
+    {"q": "What is 12 × 2?", "a": "24"},
+
+    # Science
+    {"q": "Which planet is called the Red Planet?", "a": "mars"},
+    {"q": "What gas do plants breathe in?", "a": "carbon dioxide"},
+
+    # Capitals
+    {"q": "What is the capital of India?", "a": "new delhi"},
+    {"q": "Akola is in which Indian state?", "a": "maharashtra"},
+    {"q": "What is the capital of Rajasthan?", "a": "jaipur"},
+    {"q": "What is the capital of Thailand?", "a": "bangkok"},
+
+    # Stories / History
+    {
+        "q": "Who was Prithviraj Chauhan?",
+        "a": "king"
+    },
+
+    # Fun
+    {
+        "q": "Which animal is known as the King of the Jungle?",
+        "a": "lion"
+    }
+]
+
+# ---------------------------
+# FUNCTIONS
+# ---------------------------
+def ask_new_question():
+    q = random.choice(QUESTIONS)
+    st.session_state.question = q["q"]
+    st.session_state.answer = q["a"]
+
+    intro = random.choice(ENCOURAGEMENTS)
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": f"{intro}\n\n{q['q']}"
+    })
+
+def evaluate_answer(user_input):
+    correct = st.session_state.answer.lower() in user_input.lower()
+
+    if correct:
+        st.session_state.stars += 1
+        response = f"🎉 Great job Duggu! You earned ⭐ 1 star!"
     else:
-        st.markdown(f"🐯 **Buddy:** {msg['content']}")
-
-# ---------------- INPUT ----------------
-user_input = st.chat_input("Type your answer here 😊")
-
-# ---------------- LOGIC ----------------
-if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
-
-    # Check answer
-    if st.session_state.awaiting_answer:
-        correct = st.session_state.current_answer
-        if correct and user_input.lower().strip() == correct:
-            st.session_state.stars += 1
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": "🎉 Great job Duggu! You earned ⭐ 1 star!"
-            })
-        else:
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": "😊 Nice try Duggu! Let’s keep learning together."
-            })
-
-        st.session_state.awaiting_answer = False
-
-    # Ask new question
-    q, ans = get_next_question()
-    st.session_state.asked_questions.add(q)
-    st.session_state.current_question = q
-    st.session_state.current_answer = ans
-    st.session_state.awaiting_answer = True
-    st.session_state.question_counter += 1
+        response = random.choice(TRY_AGAIN)
 
     st.session_state.messages.append({
         "role": "assistant",
-        "content": f"Duggu, here’s a fun one for you 😊\n\n{q}"
+        "content": response
     })
 
-    # Topic switch suggestion
-    if st.session_state.question_counter % 3 == 0:
+    st.session_state.turns += 1
+
+    # Occasionally ask to change topic
+    if st.session_state.turns % 3 == 0:
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "Duggu, want to change topic or mix things up? 🎲 Maths, games, capitals, or stories?"
+            "content": random.choice(CHANGE_TOPIC_PROMPTS)
         })
+    else:
+        ask_new_question()
 
-    st.rerun()
+# ---------------------------
+# SIDEBAR (CLEAN & PREMIUM)
+# ---------------------------
+with st.sidebar:
+    st.markdown("## 🗺️ Duggu’s Learning World")
+    st.markdown("""
+    🔢 Maths  
+    🔬 Science  
+    🌍 Capitals  
+    🎮 Games  
+    📖 Stories  
+    """)
+
+    st.markdown("---")
+    st.markdown("## ⭐ Stars Earned")
+    st.markdown(f"### {st.session_state.stars} ⭐")
+
+    if st.session_state.stars >= 5:
+        st.success("🏅 Star Learner!")
+    if st.session_state.stars >= 10:
+        st.success("🏆 Super Smart Duggu!")
+
+    st.markdown("---")
+    st.info("Ask anything — even fun facts about Akola 😄")
+
+# ---------------------------
+# HEADER
+# ---------------------------
+st.markdown("## Hi Duggu! 👋")
+st.markdown("### I’m your learning buddy 😊")
+st.caption("We’ll learn using games, stories, and fun questions!")
+st.caption("Created with love by your dad ❤️")
+
+st.markdown("---")
+
+# ---------------------------
+# CHAT DISPLAY
+# ---------------------------
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
+# ---------------------------
+# USER INPUT
+# ---------------------------
+user_input = st.chat_input("Type your answer here 😊")
+
+if user_input:
+    st.session_state.messages.append({
+        "role": "user",
+        "content": f"Duggu: {user_input}"
+    })
+
+    if st.session_state.question is None:
+        ask_new_question()
+    else:
+        evaluate_answer(user_input)
