@@ -55,6 +55,9 @@ st.info(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "awaiting_response" not in st.session_state:
+    st.session_state.awaiting_response = False
+
 # =====================================================
 # Show Chat History
 # =====================================================
@@ -68,49 +71,40 @@ for msg in st.session_state.messages:
 user_input = st.chat_input("Type your question here...")
 
 # =====================================================
-# ADD USER MESSAGE
+# Handle NEW user input
 # =====================================================
 if user_input:
     st.session_state.messages.append({
         "role": "user",
         "content": user_input
     })
+    st.session_state.awaiting_response = True
 
     with st.chat_message("user"):
         st.markdown(user_input)
 
 # =====================================================
-# 🚨 CRITICAL GUARD — DO NOT REMOVE
-# Only call Claude if LAST message is USER
+# 🔐 FINAL SAFETY GATE (CRITICAL)
 # =====================================================
 if (
-    st.session_state.messages
+    st.session_state.awaiting_response
+    and st.session_state.messages
     and st.session_state.messages[-1]["role"] == "user"
 ):
 
-    # =================================================
-    # Bedrock Client
-    # =================================================
     bedrock = boto3.client(
         "bedrock-runtime",
         region_name="us-east-1"
     )
 
-    # =================================================
-    # Build Claude Messages (VALIDATED)
-    # =================================================
     messages = [
         {
             "role": m["role"],
             "content": [{"type": "text", "text": m["content"]}]
         }
         for m in st.session_state.messages
-        if m["role"] in ("user", "assistant")
     ]
 
-    # =================================================
-    # Invoke Claude 3 Sonnet
-    # =================================================
     response = bedrock.invoke_model(
         modelId="anthropic.claude-3-sonnet-20240229-v1:0",
         contentType="application/json",
@@ -138,6 +132,9 @@ if (
         "role": "assistant",
         "content": assistant_reply
     })
+
+    # 🚨 This line prevents double invoke
+    st.session_state.awaiting_response = False
 
 # =====================================================
 # Footer
