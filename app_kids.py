@@ -138,4 +138,4 @@ if submitted and user_input.strip():
         {"role": "assistant", "content": reply}
     )
 
-    st.experimental_rerun()
+    st.rerun()
