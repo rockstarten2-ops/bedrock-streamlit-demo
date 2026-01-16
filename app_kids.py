@@ -1,19 +1,18 @@
 import streamlit as st
 import random
-from streamlit.components.v1 import html
 
-# ----------------------------
-# CONFIG
-# ----------------------------
+# --------------------
+# PAGE CONFIG
+# --------------------
 st.set_page_config(
     page_title="Duggu's Learning World",
     page_icon="🦁",
     layout="wide"
 )
 
-# ----------------------------
+# --------------------
 # SESSION STATE
-# ----------------------------
+# --------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -23,9 +22,9 @@ if "stars" not in st.session_state:
 if "pending_answer" not in st.session_state:
     st.session_state.pending_answer = None
 
-# ----------------------------
-# CONTENT
-# ----------------------------
+# --------------------
+# DATA
+# --------------------
 QUESTIONS = {
     "maths": [
         ("What is 7 + 5?", "12"),
@@ -49,9 +48,9 @@ FUN_FACTS = [
     "Octopuses have three hearts 🐙",
 ]
 
-# ----------------------------
+# --------------------
 # SIDEBAR
-# ----------------------------
+# --------------------
 with st.sidebar:
     st.markdown("## 🦁 Duggu’s Learning World")
     st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
@@ -63,9 +62,9 @@ with st.sidebar:
     st.markdown("- fun fact")
     st.markdown("- or ask anything 😊")
 
-# ----------------------------
+# --------------------
 # HEADER
-# ----------------------------
+# --------------------
 st.markdown(
     """
     <div style="text-align:center;">
@@ -79,64 +78,34 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ----------------------------
-# CHAT DISPLAY
-# ----------------------------
+# --------------------
+# CHAT HISTORY
+# --------------------
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(f"🧒 **Duggu:** {msg['content']}")
     else:
         st.markdown(f"🦁 **Buddy:** {msg['content']}")
 
-# ----------------------------
-# JS INPUT (ENTER TO SEND)
-# ----------------------------
-html(
-    """
-    <script>
-    const sendMessage = () => {
-        const input = document.getElementById("kidInput");
-        if (input.value.trim() !== "") {
-            window.parent.postMessage(
-                { type: "duggu_msg", text: input.value },
-                "*"
-            );
-            input.value = "";
-        }
-    };
-    </script>
+# --------------------
+# INPUT FORM (THE FIX)
+# --------------------
+with st.form("chat_form", clear_on_submit=True):
+    user_input = st.text_input("Type here 😊")
+    submitted = st.form_submit_button("Send")
 
-    <input
-        id="kidInput"
-        placeholder="Type here 😊"
-        style="
-            width:100%;
-            padding:12px;
-            font-size:16px;
-            border-radius:8px;
-            border:1px solid #ccc;
-        "
-        onkeydown="if(event.key==='Enter'){sendMessage();}"
-    />
-    """,
-    height=70
-)
-
-# ----------------------------
-# RECEIVE MESSAGE
-# ----------------------------
-msg = st.session_state.get("_incoming")
-
-if msg:
-    text = msg.lower().strip()
-    st.session_state.messages.append({"role": "user", "content": msg})
+if submitted and user_input.strip():
+    text = user_input.lower().strip()
+    st.session_state.messages.append(
+        {"role": "user", "content": user_input}
+    )
 
     reply = ""
 
     if st.session_state.pending_answer:
         if text == st.session_state.pending_answer:
             st.session_state.stars += 1
-            reply = "🎉 Awesome, Duggu! You earned ⭐ 1 star!"
+            reply = "🎉 Amazing, Duggu! You earned ⭐ 1 star!"
         else:
             reply = f"Nice try 😊 The correct answer is **{st.session_state.pending_answer.title()}**!"
         st.session_state.pending_answer = None
@@ -165,27 +134,8 @@ if msg:
             "Ask me about animals, space, maths, Akola, or anything fun!"
         )
 
-    st.session_state.messages.append({"role": "assistant", "content": reply})
-    st.session_state["_incoming"] = None
-    st.experimental_rerun()
+    st.session_state.messages.append(
+        {"role": "assistant", "content": reply}
+    )
 
-# ----------------------------
-# LISTEN TO JS
-# ----------------------------
-st.markdown(
-    """
-    <script>
-    window.addEventListener("message", (event) => {
-        if (event.data.type === "duggu_msg") {
-            const input = event.data.text;
-            fetch("/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({msg: input})
-            });
-        }
-    });
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+    st.experimental_rerun()
