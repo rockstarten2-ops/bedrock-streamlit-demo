@@ -1,43 +1,50 @@
 import streamlit as st
 import random
 
-# -----------------------------
+# ---------------------------------
 # PAGE CONFIG
-# -----------------------------
+# ---------------------------------
 st.set_page_config(
     page_title="Duggu's Learning World",
     page_icon="🦁",
     layout="wide"
 )
 
-# -----------------------------
+# ---------------------------------
 # SESSION STATE
-# -----------------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# ---------------------------------
+def init_state():
+    defaults = {
+        "messages": [],
+        "stars": 0,
+        "asked": set(),
+        "event": None,
+        "current_answer": None,
+        "greeted": False
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
-if "stars" not in st.session_state:
-    st.session_state.stars = 0
+init_state()
 
-if "asked_questions" not in st.session_state:
-    st.session_state.asked_questions = set()
-
-if "greeted" not in st.session_state:
-    st.session_state.greeted = False
-
-if "pending_user_input" not in st.session_state:
-    st.session_state.pending_user_input = None
-
-# -----------------------------
-# CONTENT
-# -----------------------------
-QUESTIONS = [
-    ("What is 7 + 5?", "12"),
-    ("Which planet is called the Red Planet?", "mars"),
-    ("Which animal is the King of the Jungle?", "lion"),
-    ("What is the capital of India?", "delhi"),
-    ("Akola is in which Indian state?", "maharashtra"),
-]
+# ---------------------------------
+# QUESTION BANK
+# ---------------------------------
+QUESTIONS = {
+    "maths": [
+        ("What is 7 + 5?", "12"),
+        ("What is 8 + 7?", "15"),
+    ],
+    "science": [
+        ("Which planet is called the Red Planet?", "mars"),
+        ("Which animal is the King of the Jungle?", "lion"),
+    ],
+    "capitals": [
+        ("What is the capital of India?", "delhi"),
+        ("Akola is in which Indian state?", "maharashtra"),
+    ]
+}
 
 FUN_FACTS = [
     "Lions live in groups called prides 🦁",
@@ -45,128 +52,115 @@ FUN_FACTS = [
     "Akola is famous for cotton production 🌱",
 ]
 
-# -----------------------------
+# ---------------------------------
+# EVENT HANDLERS (CRITICAL FIX)
+# ---------------------------------
+def set_topic(topic):
+    st.session_state.event = ("topic", topic)
+
+def set_user_input(text):
+    st.session_state.event = ("chat", text)
+
+# ---------------------------------
 # SIDEBAR
-# -----------------------------
+# ---------------------------------
 with st.sidebar:
     st.markdown("## 🦁 Duggu’s Learning World")
     st.markdown(f"⭐ **Stars Earned:** {st.session_state.stars}")
     st.markdown("---")
 
-    if st.button("➕ Maths"):
-        st.session_state.pending_user_input = "maths"
-
-    if st.button("🔬 Science"):
-        st.session_state.pending_user_input = "science"
-
-    if st.button("🌍 Capitals"):
-        st.session_state.pending_user_input = "capitals"
-
-    if st.button("📖 Stories"):
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": "🦁 Buddy: Once upon a time, there was a brave king named Prithviraj Chauhan… Want to hear more? 😊"
-        })
+    st.button("➕ Maths", on_click=set_topic, args=("maths",))
+    st.button("🔬 Science", on_click=set_topic, args=("science",))
+    st.button("🌍 Capitals", on_click=set_topic, args=("capitals",))
+    st.button("📖 Stories", on_click=set_topic, args=("stories",))
 
     st.markdown("---")
     st.caption("Ask anything — even fun facts about Akola 😊")
 
-# -----------------------------
-# FUNCTIONS
-# -----------------------------
-def ask_question():
-    available = [q for q in QUESTIONS if q[0] not in st.session_state.asked_questions]
-    if not available:
-        st.session_state.asked_questions.clear()
-        available = QUESTIONS
-
-    q, a = random.choice(available)
-    st.session_state.asked_questions.add(q)
+# ---------------------------------
+# LOGIC
+# ---------------------------------
+def ask_question(topic):
+    pool = QUESTIONS.get(topic, [])
+    q, a = random.choice(pool)
+    st.session_state.current_answer = a.lower()
 
     st.session_state.messages.append({
         "role": "assistant",
         "content": f"🦁 Buddy: Alright Duggu! 😊 {q}"
     })
 
-    st.session_state.current_answer = a.lower()
-
-
-def process_answer(text):
-    if "current_answer" not in st.session_state:
+def handle_answer(text):
+    if st.session_state.current_answer is None:
         return False
 
     if text.lower().strip() == st.session_state.current_answer:
         st.session_state.stars += 1
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "🦁 Buddy: 🎉 Fantastic Duggu! You got it right! ⭐"
+            "content": "🦁 Buddy: 🎉 Awesome Duggu! You got it right! ⭐"
         })
     else:
         st.session_state.messages.append({
             "role": "assistant",
-            "content": "🦁 Buddy: Nice try Duggu! 😊 Learning is about trying!"
+            "content": "🦁 Buddy: Nice try Duggu 😊 Let’s keep learning!"
         })
 
-    del st.session_state.current_answer
-    ask_question()
+    st.session_state.current_answer = None
     return True
 
+def handle_chat(text):
+    text_l = text.lower().strip()
 
-def process_free_chat(text):
-    text = text.lower().strip()
-
-    if text in ["hi", "hello", "hey"] and not st.session_state.greeted:
+    if text_l in ["hi", "hello", "hey"] and not st.session_state.greeted:
         st.session_state.greeted = True
-        return (
-            "Hi Duggu! 😄 I’m so happy you’re here!\n\n"
-            "We’ll learn with games, stories, and fun questions.\n"
-            "You can also say **surprise** 😉"
-        )
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": (
+                "Hi Duggu! 😄 I’m so happy you’re here!\n\n"
+                "We’ll learn with games, stories, and fun questions.\n"
+                "You can click a topic on the left or ask me anything!"
+            )
+        })
+        return
 
-    if text in ["anything", "surprise", "maths", "science", "capitals"]:
-        ask_question()
-        return None
+    if handle_answer(text):
+        return
 
-    return random.choice(FUN_FACTS)
+    st.session_state.messages.append({
+        "role": "assistant",
+        "content": f"🦁 Buddy: {random.choice(FUN_FACTS)}"
+    })
 
-# -----------------------------
+# ---------------------------------
 # MAIN UI
-# -----------------------------
+# ---------------------------------
 st.markdown("## Hi Duggu! 👋")
 st.markdown("### I’m your learning buddy 😊")
 st.caption("Created with love by your dad ❤️")
 st.markdown("---")
 
-# -----------------------------
-# CHAT HISTORY
-# -----------------------------
 for msg in st.session_state.messages:
     st.markdown(msg["content"])
 
-# -----------------------------
-# INPUT (CAPTURE ONLY)
-# -----------------------------
-user_text = st.chat_input("Type here 😊")
+user_input = st.chat_input("Type here 😊")
 
-if user_text:
-    st.session_state.pending_user_input = user_text
+if user_input:
+    set_user_input(user_input)
 
-# -----------------------------
-# PROCESS INPUT (SAFE)
-# -----------------------------
-if st.session_state.pending_user_input:
-    text = st.session_state.pending_user_input
-    st.session_state.pending_user_input = None
+# ---------------------------------
+# EVENT PROCESSOR (SINGLE SOURCE OF TRUTH)
+# ---------------------------------
+if st.session_state.event:
+    kind, value = st.session_state.event
+    st.session_state.event = None
 
-    st.session_state.messages.append({
-        "role": "user",
-        "content": f"🧒 Duggu: {text}"
-    })
+    if kind == "topic":
+        ask_question(value)
 
-    if not process_answer(text):
-        reply = process_free_chat(text)
-        if reply:
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": f"🦁 Buddy: {reply}"
-            })
+    elif kind == "chat":
+        st.session_state.messages.append({
+            "role": "user",
+            "content": f"🧒 Duggu: {value}"
+        })
+        handle_chat(value)
