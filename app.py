@@ -96,7 +96,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": “I’m your Tell Me More assistant. I’m sorry the vehicle hasn’t met expectations—thanks for your time. I’ll ask a few quick questions, so your technician has exactly what they need to fix it right the first time.”,
+            "content": "I’m your Tell Me More assistant. I’m sorry the vehicle hasn’t met expectations—thanks for your time. I’ll ask a few quick questions, so your technician has exactly what they need to fix it right the first time.",
         }
     ]
 
