@@ -96,8 +96,7 @@ if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
-            "content": "Opening: “I’m your Tell Me More assistant. I’m sorry the vehicle hasn’t met expectations—thanks for your time. I’ll ask a few quick questions, so your technician has exactly what they need to fix it right the first time.”
-WHAT → WHEN (+ speed/load) → BEGAN (+ frequency) → WHERE (+ clarify vague) → DEMONSTRATE → RO LINE CONFIRMATION → ANYTHING ELSE → SUMMARY + HANDOFF NOTE.",
+            "content": “I’m your Tell Me More assistant. I’m sorry the vehicle hasn’t met expectations—thanks for your time. I’ll ask a few quick questions, so your technician has exactly what they need to fix it right the first time.”,
         }
     ]
 
