@@ -27,7 +27,8 @@ st.markdown(
         <div>
             <div style="font-size:32px; font-weight:800;">Tell Me More</div>
             <div style="color:#6b7280;">
-                We’ll ask a few questions to understand what’s going on, so your dealership can prepare before your visit.
+                We care about your satisfaction. Let’s get started gathering details about your vehicle concern. Follow the prompts to tell us about what you are observing, when it happens, and where on the vehicle it is happening.
+The more details you provide will help your technician fix your vehicle right the first time.
             </div>
         </div>
     </div>
