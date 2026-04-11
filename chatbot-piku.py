@@ -50,7 +50,7 @@ st.markdown(
         <h1>Hi Piku! 👋</h1>
         <h3>I’m your learning buddy. My name is Jarvis 🤖</h3>
         <p>Ask me anything you’re learning in school. We’ll figure it out together!</p>
-        <p><i>Created with love by your dad ❤️</i></p>
+        <p><i>Created with love by your brother Duggu ❤️</i></p>
         <hr>
     </div>
     """,
