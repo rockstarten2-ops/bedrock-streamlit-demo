@@ -37,7 +37,7 @@ with st.sidebar:
     st.markdown("## 🎯 Choose a topic")
     topic = st.radio(
         "",
-        ["Maths ➕", "Fractions 🍕", "Multiplication ✖️", "Division ➗", "Science 🔬", "Reading 📘", "Fun Quiz 🎉"]
+        ["Robotics 🤖", "Maths ➕", "Fractions 🍕", "Multiplication ✖️", "Division ➗", "Science 🔬", "Reading 📘", "Fun Quiz 🎉"]
     )
     st.session_state.topic = topic.split(" ")[0]
 
