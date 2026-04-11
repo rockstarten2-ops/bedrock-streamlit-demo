@@ -93,7 +93,7 @@ if user_input:
             })
 
     system_prompt = (
-        "You are a friendly, patient learning buddy for a Grade 4 student named Duggu. "
+        "You are a friendly, patient learning buddy for a Grade 6 student named Piku. "
         "Use simple words, emojis, and step-by-step explanations. "
         f"The current topic is {st.session_state.topic}. "
         "Encourage Duggu and make learning fun."
