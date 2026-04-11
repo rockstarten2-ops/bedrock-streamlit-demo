@@ -48,7 +48,7 @@ st.markdown(
     """
     <div style="text-align:center;">
         <h1>Hi Duggu! 👋</h1>
-        <h3>I’m your learning buddy. My name is Jarvis🤖</h3>
+        <h3>I’m your learning buddy. My name is Jarvis 🤖</h3>
         <p>Ask me anything you’re learning in school. We’ll figure it out together!</p>
         <p><i>Created with love by your dad ❤️</i></p>
         <hr>
